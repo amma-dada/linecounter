@@ -3,9 +3,13 @@ name: Release & CI Builds
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -32,26 +36,44 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
 
-      - name: Build CLI Executable
-        run: cargo build --release --manifest-path Cargo.toml
-
       - name: Build Desktop GUI Executable
         run: cargo build --release --manifest-path src-tauri/Cargo.toml
 
-      - name: Upload Windows Artifacts
+      - name: Stage Windows Executable
         if: matrix.os == 'windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: LineCounter-Windows
-          path: |
-            target/release/linecounter.exe
-            src-tauri/target/release/linecounter.exe
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp src-tauri/target/release/linecounter.exe dist/LineCounter.exe
 
-      - name: Upload Linux Artifacts
+      - name: Stage Linux Executable
         if: matrix.os == 'linux'
+        run: |
+          mkdir -p dist
+          cp src-tauri/target/release/linecounter dist/LineCounter-Linux
+
+      - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LineCounter-Linux
-          path: |
-            target/release/linecounter
-            src-tauri/target/release/linecounter
+          name: LineCounter-${{ matrix.os }}
+          path: dist/*
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true

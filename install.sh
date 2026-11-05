@@ -48,12 +48,29 @@ if [ -f "${SOURCE_DIR}/linecounter.svg" ]; then
 fi
 
 if [ -f "${SOURCE_DIR}/linecounter.png" ]; then
-    for size in 256 128 64 48 32 16; do
-        target_dir="${HOME}/.local/share/icons/hicolor/${size}x${size}/apps"
-        mkdir -p "${target_dir}"
-        cp "${SOURCE_DIR}/linecounter.png" "${target_dir}/com.linecounter.desktop.png"
-        cp "${SOURCE_DIR}/linecounter.png" "${target_dir}/linecounter.png"
-    done
+    if python3 -c "from PIL import Image" >/dev/null 2>&1; then
+        python3 -c "
+import os
+from PIL import Image
+
+src_img = Image.open('${SOURCE_DIR}/linecounter.png')
+home = os.environ['HOME']
+
+for sz in [512, 256, 128, 64, 48, 32, 24, 16]:
+    dir_path = f'{home}/.local/share/icons/hicolor/{sz}x{sz}/apps'
+    os.makedirs(dir_path, exist_ok=True)
+    resized = src_img.resize((sz, sz), Image.Resampling.LANCZOS)
+    resized.save(f'{dir_path}/com.linecounter.desktop.png')
+    resized.save(f'{dir_path}/linecounter.png')
+"
+    else
+        for size in 512 256 128 64 48 32 24 16; do
+            target_dir="${HOME}/.local/share/icons/hicolor/${size}x${size}/apps"
+            mkdir -p "${target_dir}"
+            cp "${SOURCE_DIR}/linecounter.png" "${target_dir}/com.linecounter.desktop.png"
+            cp "${SOURCE_DIR}/linecounter.png" "${target_dir}/linecounter.png"
+        done
+    fi
     cp "${SOURCE_DIR}/linecounter.png" "${HOME}/.local/share/pixmaps/com.linecounter.desktop.png"
     cp "${SOURCE_DIR}/linecounter.png" "${HOME}/.local/share/pixmaps/linecounter.png"
 fi
