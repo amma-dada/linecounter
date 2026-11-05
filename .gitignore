@@ -1,0 +1,50 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Build & packaging artifacts
+build/
+dist/
+target/
+node_modules/
+*.egg-info/
+*.egg
+*.spec.bak
+
+# Flatpak build artifacts
+.flatpak-builder/
+flatpak/build/
+flatpak/repo/
+flatpak/.flatpak-builder/
+
+# Compiled Binaries
+linecounter-desktop
+linecounter
+
+# IDE & Editor configuration
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# Operating System artifacts
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Logs
+*.log

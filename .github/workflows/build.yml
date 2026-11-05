@@ -1,0 +1,57 @@
+name: Release & CI Builds
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'ubuntu-22.04'
+            os: 'linux'
+          - platform: 'windows-latest'
+            os: 'windows'
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux System Dependencies
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Build CLI Executable
+        run: cargo build --release --manifest-path Cargo.toml
+
+      - name: Build Desktop GUI Executable
+        run: cargo build --release --manifest-path src-tauri/Cargo.toml
+
+      - name: Upload Windows Artifacts
+        if: matrix.os == 'windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: LineCounter-Windows
+          path: |
+            target/release/linecounter.exe
+            src-tauri/target/release/linecounter.exe
+
+      - name: Upload Linux Artifacts
+        if: matrix.os == 'linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: LineCounter-Linux
+          path: |
+            target/release/linecounter
+            src-tauri/target/release/linecounter

@@ -1,0 +1,28 @@
+[package]
+name = "linecounter"
+version = "1.0.0"
+description = "LineCounter - Accurate cross-platform line and code counter"
+authors = ["Mortada (Dada)"]
+license = "Apache-2.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+walkdir = "2.5"
+rayon = "1.10"
+memchr = "2.7"
+tokio = { version = "1", features = ["sync"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
