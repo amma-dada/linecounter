@@ -1,0 +1,79 @@
+name: Release & CI Builds
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'ubuntu-22.04'
+            os: 'linux'
+          - platform: 'windows-latest'
+            os: 'windows'
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux System Dependencies
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Build Desktop GUI Executable
+        run: cargo build --release --manifest-path src-tauri/Cargo.toml
+
+      - name: Stage Windows Executable
+        if: matrix.os == 'windows'
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp src-tauri/target/release/linecounter.exe dist/LineCounter.exe
+
+      - name: Stage Linux Executable
+        if: matrix.os == 'linux'
+        run: |
+          mkdir -p dist
+          cp src-tauri/target/release/linecounter dist/LineCounter-Linux
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LineCounter-${{ matrix.os }}
+          path: dist/*
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true
