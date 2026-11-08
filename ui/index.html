@@ -237,19 +237,11 @@
             display: flex;
         }
 
-        /* ==================== TAB: DEDICATED DRAG & DROP ==================== */
-        .drop-page-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            min-height: 0;
-            gap: 1rem;
-        }
-
-        .hero-dropzone {
-            flex: 1;
-            min-height: 280px;
-            border: 2px dashed rgba(99, 102, 241, 0.4);
+        /* ==================== EMBEDDED DRAG & DROP & GLOBAL OVERLAY ==================== */
+        .embedded-dropzone {
+            width: 100%;
+            min-height: 220px;
+            border: 2px dashed rgba(99, 102, 241, 0.35);
             border-radius: 16px;
             background: rgba(19, 29, 51, 0.45);
             display: flex;
@@ -257,17 +249,22 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 2.5rem;
+            padding: 2.5rem 1.5rem;
             cursor: pointer;
             transition: all 0.25s ease;
             position: relative;
+            box-sizing: border-box;
         }
 
-        .hero-dropzone:hover, .hero-dropzone.dragover {
+        .embedded-dropzone:hover, .embedded-dropzone.dragover {
             border-color: var(--accent-primary);
             background: rgba(99, 102, 241, 0.12);
-            box-shadow: 0 0 35px rgba(99, 102, 241, 0.25);
-            transform: scale(1.003);
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.25);
+        }
+
+        .embedded-dropzone:hover .drop-icon-circle {
+            transform: scale(1.08);
+            box-shadow: 0 6px 25px rgba(99, 102, 241, 0.45);
         }
 
         .drop-icon-circle {
@@ -309,21 +306,36 @@
             align-items: center;
         }
 
-        /* Drop Results Card */
-        .drop-results-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: 14px;
-            padding: 1.15rem 1.5rem;
-            display: none;
+        /* Universal Window Drag & Drop Overlay */
+        .window-drag-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: rgba(10, 15, 29, 0.88);
+            backdrop-filter: blur(12px);
+            display: flex;
             align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-            animation: fadeIn 0.2s ease-out;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
         }
 
-        .drop-results-card.show {
+        .window-drag-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .window-drag-card {
+            border: 2px dashed #818cf8;
+            border-radius: 20px;
+            padding: 3rem 4rem;
+            background: rgba(19, 29, 51, 0.95);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 45px rgba(99, 102, 241, 0.35);
+            text-align: center;
             display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         /* ==================== TAB: SINGLE FILE ==================== */
@@ -1506,26 +1518,22 @@
         </div>
 
         <div class="tab-nav">
-            <button class="tab-btn active" onclick="switchTab('drop')">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                Drag & Drop
-            </button>
-            <button class="tab-btn" onclick="switchTab('file')">
+            <button class="tab-btn active" onclick="switchTab('file')">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
                 Single File
-            </button>
-            <button class="tab-btn" onclick="switchTab('paste')">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                Live Paste
             </button>
             <button class="tab-btn" onclick="switchTab('batch')">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
                 Batch Scanner
             </button>
+            <button class="tab-btn" onclick="switchTab('paste')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                Live Paste
+            </button>
         </div>
 
         <div style="display: flex; align-items: center; gap: 0.65rem;">
-            <button class="pill-btn" onclick="toggleConnectModal()" style="display: flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.8rem; font-size: 0.8rem; border-color: rgba(99, 102, 241, 0.45); color: #c7d2fe; background: rgba(99, 102, 241, 0.15); cursor: pointer; border-radius: 8px; font-weight: 600;" title="Follow & Connect (GitHub, LinkedIn, Email, Ko-fi, PayPal)">
+            <button class="pill-btn" onclick="toggleConnectModal()" style="display: flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.8rem; font-size: 0.8rem; border-color: rgba(99, 102, 241, 0.45); color: #c7d2fe; background: rgba(99, 102, 241, 0.15); cursor: pointer; border-radius: 8px; font-weight: 600;" title="Follow & Connect (GitHub, LinkedIn, Email, Ko-fi)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
                 Follow me
             </button>
@@ -1574,37 +1582,8 @@
     </div>
 
     <main>
-        <!-- TAB 0: DEDICATED DRAG & DROP PAGE -->
-        <div id="tab-drop" class="tab-content active">
-            <div class="drop-page-container">
-                <div class="hero-dropzone" id="hero-dropzone" onclick="openFileNative()">
-                    <div class="drop-icon-circle">
-                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                    </div>
-                    <h2 class="drop-title">Drag & Drop Any File or Directory Here</h2>
-                    <p class="drop-subtitle">
-                        Drop any file for instant line-by-line inspection, or drop any directory to automatically scan all nested subdirectories.
-                    </p>
-                    <div class="drop-actions" onclick="event.stopPropagation()">
-                        <button class="btn btn-primary" onclick="openBatchFilesNative()">📂 Choose Files</button>
-                        <button class="btn btn-secondary" onclick="openFolderNative()">📁 Choose Folder</button>
-                    </div>
-                </div>
-
-                <div class="drop-results-card" id="drop-results-card">
-                    <div>
-                        <div id="drop-result-title" style="font-weight:700; font-size:1.05rem; color:#ffffff; margin-bottom:0.25rem;"></div>
-                        <div id="drop-result-stats" style="font-size:0.825rem; color:var(--text-secondary); font-family:var(--font-mono);"></div>
-                    </div>
-                    <button class="btn btn-primary" id="drop-view-btn">
-                        View Full Details ➔
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB 1: Single File Inspector -->
-        <div id="tab-file" class="tab-content">
+        <!-- Single File Inspector (Default View) -->
+        <div id="tab-file" class="tab-content active">
             <div id="back-to-batch-banner" style="display:none; margin-bottom: 0.85rem;">
                 <button class="btn btn-secondary" onclick="returnToBatchScanner()" style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.4rem 0.95rem; font-size: 0.825rem; font-weight: 600; background: rgba(99, 102, 241, 0.16); border: 1px solid rgba(99, 102, 241, 0.4); color: #c7d2fe; border-radius: 8px; cursor: pointer; transition: all 0.15s ease;">
                     ← Back to Batch Scanner (<span id="batch-return-count">0</span> files)
@@ -1724,9 +1703,18 @@
                     </div>
                 </div>
 
-                <div class="code-container" id="preview-lines">
-                    <div style="padding: 2.5rem; text-align: center; color: var(--text-muted);">
-                        Select or drop a file to view line-by-line inspection
+                <div class="code-container" id="preview-lines" style="display: flex;">
+                    <div id="file-empty-dropzone" class="embedded-dropzone" onclick="openBatchFilesNative()">
+                        <div class="drop-icon-circle">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        </div>
+                        <h3 class="drop-title">Drag & Drop Any File Here</h3>
+                        <p class="drop-subtitle">
+                            Drop any code or text file for instant line-by-line inspection, empty line breakdown, and live editing.
+                        </p>
+                        <div class="drop-actions" onclick="event.stopPropagation()">
+                            <button class="btn btn-primary" onclick="openBatchFilesNative()">📂 Browse Files</button>
+                        </div>
                     </div>
                 </div>
 
@@ -1808,8 +1796,20 @@
                         </thead>
                         <tbody id="batch-tbody">
                             <tr>
-                                <td colspan="5" style="text-align:center; padding: 3rem; color: var(--text-muted);">
-                                    Select files or a directory to start batch counting (all subdirectories included)
+                                <td colspan="5" style="padding: 2rem 1rem; text-align: center; border: none;">
+                                    <div class="embedded-dropzone" onclick="openFolderNative()" style="max-width: 520px; margin: 0 auto;">
+                                        <div class="drop-icon-circle">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                                        </div>
+                                        <h3 class="drop-title" style="font-size: 1.25rem;">Drag & Drop a Folder or Project</h3>
+                                        <p class="drop-subtitle" style="font-size: 0.875rem; margin-bottom: 1.25rem;">
+                                            Recursively scans all files and subdirectories with multi-threaded Rust speed.
+                                        </p>
+                                        <div class="drop-actions" onclick="event.stopPropagation()">
+                                            <button class="btn btn-secondary" onclick="openFolderNative()">📁 Choose Folder</button>
+                                            <button class="btn btn-primary" onclick="openBatchFilesNative()">📂 Choose Files</button>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -1825,6 +1825,19 @@
                 </div>
             </div>
         </div>
+
+        <!-- Universal Window Drag & Drop Overlay -->
+        <div id="window-drag-overlay" class="window-drag-overlay">
+            <div class="window-drag-card">
+                <div class="drop-icon-circle" style="width: 72px; height: 72px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                </div>
+                <h2 style="margin-top: 1rem; font-size: 1.35rem; color: #ffffff; font-weight: 700;">Drop to Count & Inspect</h2>
+                <p style="margin-top: 0.35rem; font-size: 0.875rem; color: var(--text-secondary);">
+                    Drop a <b>single file</b> to inspect • Drop a <b>folder</b> to batch scan
+                </p>
+            </div>
+        </div>
     </main>
 
     <!-- Modal: README, SHORTCUTS, ABOUT -->
@@ -1838,6 +1851,18 @@
                 <div class="help-section">
                     <h4>⌨️ Keyboard Shortcuts</h4>
                     <div class="shortcuts-grid">
+                        <div class="shortcut-item">
+                            <span>Single File Tab</span>
+                            <kbd>Ctrl + 1</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Batch Scanner Tab</span>
+                            <kbd>Ctrl + 2</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Live Paste Tab</span>
+                            <kbd>Ctrl + 3</kbd>
+                        </div>
                         <div class="shortcut-item">
                             <span>Inspect path / Count</span>
                             <kbd>Enter</kbd>
@@ -1855,8 +1880,8 @@
                             <kbd>Ctrl + W</kbd>
                         </div>
                         <div class="shortcut-item">
-                            <span>Find in Preview</span>
-                            <kbd>Ctrl + F</kbd>
+                            <span>Find / Replace</span>
+                            <kbd>Ctrl + F / H</kbd>
                         </div>
                         <div class="shortcut-item">
                             <span>Next Empty Line</span>
@@ -2028,14 +2053,21 @@
         let batchDisplayLimit = 300;
 
         function switchTab(tabId) {
+            if (tabId === 'drop') tabId = 'file';
+
             document.querySelectorAll('.tab-nav .tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
-            const targetIndex = ['drop', 'file', 'paste', 'batch'].indexOf(tabId);
+            const tabOrder = ['file', 'batch', 'paste'];
+            const targetIndex = tabOrder.indexOf(tabId);
             if (targetIndex >= 0) {
-                document.querySelectorAll('.tab-nav .tab-btn')[targetIndex].classList.add('active');
+                const navBtns = document.querySelectorAll('.tab-nav .tab-btn');
+                if (navBtns[targetIndex]) navBtns[targetIndex].classList.add('active');
             }
-            document.getElementById('tab-' + tabId).classList.add('active');
+            const targetContent = document.getElementById('tab-' + tabId);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
         }
 
         function toggleHelpModal() {
@@ -2201,40 +2233,38 @@
             processBatchPathsDirectly(paths);
         };
 
-        // ==================== HTML5 DRAG & DROP ====================
-        const heroDropzone = document.getElementById('hero-dropzone');
+        // ==================== UNIVERSAL HTML5 DRAG & DROP ====================
+        let windowDragDepth = 0;
+        const windowDragOverlay = document.getElementById('window-drag-overlay');
 
         ['dragenter', 'dragover'].forEach(eventName => {
-            heroDropzone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                heroDropzone.classList.add('dragover');
-            }, false);
-
             window.addEventListener(eventName, (e) => {
                 e.preventDefault();
+                if (eventName === 'dragenter') {
+                    windowDragDepth++;
+                    if (windowDragOverlay) windowDragOverlay.classList.add('active');
+                }
+                if (e.dataTransfer) {
+                    e.dataTransfer.dropEffect = 'copy';
+                }
             }, false);
         });
 
         ['dragleave', 'dragend'].forEach(eventName => {
-            heroDropzone.addEventListener(eventName, (e) => {
+            window.addEventListener(eventName, (e) => {
                 e.preventDefault();
-                e.stopPropagation();
-                heroDropzone.classList.remove('dragover');
+                windowDragDepth--;
+                if (windowDragDepth <= 0) {
+                    windowDragDepth = 0;
+                    if (windowDragOverlay) windowDragOverlay.classList.remove('active');
+                }
             }, false);
         });
 
-        heroDropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            heroDropzone.classList.remove('dragover');
-
-            handleAnyDropEvent(e);
-        }, false);
-
         window.addEventListener('drop', (e) => {
-            if (e.target.closest('#hero-dropzone')) return;
             e.preventDefault();
+            windowDragDepth = 0;
+            if (windowDragOverlay) windowDragOverlay.classList.remove('active');
             handleAnyDropEvent(e);
         }, false);
 
@@ -2339,24 +2369,28 @@
         }
 
         function displayDropResultCard(name, type) {
-            const card = document.getElementById('drop-results-card');
-            const title = document.getElementById('drop-result-title');
-            const stats = document.getElementById('drop-result-stats');
-            const btn = document.getElementById('drop-view-btn');
+            const filename = (name || '').split('/').pop() || name;
+            showToast(type === 'file' ? `Opened ${filename}` : `Scanning ${filename}...`);
+        }
 
-            card.classList.add('show');
-            if (type === 'file') {
-                title.innerText = `📄 ${name.split('/').pop()}`;
-                stats.innerText = `Loaded and counted! Path: ${name}`;
-                btn.innerText = 'View in Inspector ➔';
-                btn.onclick = () => switchTab('file');
-            } else {
-                title.innerText = `📁 ${name.split('/').pop() || name}`;
-                stats.innerText = `Scanning directory and all subdirectories: ${name}`;
-                btn.innerText = 'View in Batch Table ➔';
-                btn.onclick = () => switchTab('batch');
-            }
-            showToast('Item successfully dropped!');
+        function showFileEmptyDropzone() {
+            const container = document.getElementById('preview-lines');
+            if (!container) return;
+            container.style.display = 'flex';
+            container.innerHTML = `
+                <div id="file-empty-dropzone" class="embedded-dropzone" onclick="openBatchFilesNative()">
+                    <div class="drop-icon-circle">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    </div>
+                    <h3 class="drop-title">Drag & Drop Any File Here</h3>
+                    <p class="drop-subtitle">
+                        Drop any code or text file for instant line-by-line inspection, empty line breakdown, and live editing.
+                    </p>
+                    <div class="drop-actions" onclick="event.stopPropagation()">
+                        <button class="btn btn-primary" onclick="openBatchFilesNative()">📂 Browse Files</button>
+                    </div>
+                </div>
+            `;
         }
 
         function countFromPathInput() {
@@ -2617,7 +2651,13 @@
             const container = document.getElementById('preview-lines');
             if (!container) return;
 
-            if (!currentStats || !currentStats.preview_lines || !currentStats.preview_lines.length) {
+            if (!currentStats) {
+                showFileEmptyDropzone();
+                return;
+            }
+
+            if (!currentStats.preview_lines || !currentStats.preview_lines.length) {
+                container.style.display = 'block';
                 container.innerHTML = '<div style="padding: 2.5rem; text-align: center; color: var(--text-muted);">Empty file (0 lines)</div>';
                 const sc = document.getElementById('search-count');
                 if (sc) sc.innerText = '';
@@ -2626,6 +2666,7 @@
                 return;
             }
 
+            container.style.display = 'block';
             const totalLines = currentStats.preview_lines.length;
             filteredLinesCache = [];
             let matchCount = 0;
@@ -3396,6 +3437,29 @@
             if (!tbody) return;
             tbody.innerHTML = '';
 
+            if (!batchResults || batchResults.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="padding: 2.5rem 1rem; text-align: center; border: none;">
+                            <div class="embedded-dropzone" onclick="openFolderNative()" style="max-width: 520px; margin: 0 auto;">
+                                <div class="drop-icon-circle">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                                </div>
+                                <h3 class="drop-title" style="font-size: 1.25rem;">Drag & Drop a Folder or Project</h3>
+                                <p class="drop-subtitle" style="font-size: 0.875rem; margin-bottom: 1.25rem;">
+                                    Recursively scans all files and subdirectories with multi-threaded Rust speed.
+                                </p>
+                                <div class="drop-actions" onclick="event.stopPropagation()">
+                                    <button class="btn btn-secondary" onclick="openFolderNative()">📁 Choose Folder</button>
+                                    <button class="btn btn-primary" onclick="openBatchFilesNative()">📂 Choose Files</button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
             let filtered = batchResults.slice();
             if (activeExtFilter) {
                 filtered = filtered.filter(f => {
@@ -3639,13 +3703,11 @@ Words: ${s.word_count.toLocaleString()} | Chars: ${s.char_count.toLocaleString()
                     }
                 }
             } else if (e.ctrlKey && e.key === '1') {
-                e.preventDefault(); switchTab('drop');
-            } else if (e.ctrlKey && e.key === '2') {
                 e.preventDefault(); switchTab('file');
+            } else if (e.ctrlKey && e.key === '2') {
+                e.preventDefault(); switchTab('batch');
             } else if (e.ctrlKey && e.key === '3') {
                 e.preventDefault(); switchTab('paste');
-            } else if (e.ctrlKey && e.key === '4') {
-                e.preventDefault(); switchTab('batch');
             } else if (e.ctrlKey && e.key === 'o' && !e.shiftKey) {
                 e.preventDefault();
                 openFileNative();
@@ -3713,12 +3775,12 @@ Words: ${s.word_count.toLocaleString()} | Chars: ${s.char_count.toLocaleString()
                         switchTab('batch');
                         processBatchPathsDirectly(data.paths);
                     } else {
-                        switchTab('drop');
+                        switchTab('file');
                     }
                 })
-                .catch(() => switchTab('drop'));
+                .catch(() => switchTab('file'));
             } else {
-                switchTab('drop');
+                switchTab('file');
             }
         });
     </script>

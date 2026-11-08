@@ -18,11 +18,11 @@
 
 ## 📸 Screenshots
 
-| 1. Drag & Drop | 2. Single File Inspector |
+| 1. Single File Inspector | 2. Batch Directory Scanner |
 | :---: | :---: |
-| <a href="assets/screenshots/01-drag-drop.png"><img src="assets/screenshots/01-drag-drop.png" width="100%" alt="Drag and Drop Tab" /></a> | <a href="assets/screenshots/02-single-file.png"><img src="assets/screenshots/02-single-file.png" width="100%" alt="Single File Inspector Tab" /></a> |
-| **3. Live Paste Counter** | **4. Batch Directory Scanner** |
-| <a href="assets/screenshots/03-live-paste.png"><img src="assets/screenshots/03-live-paste.png" width="100%" alt="Live Paste Counter Tab" /></a> | <a href="assets/screenshots/04-batch-scanner.png"><img src="assets/screenshots/04-batch-scanner.png" width="100%" alt="Batch Scanner Tab" /></a> |
+| <a href="assets/screenshots/02-single-file.png"><img src="assets/screenshots/02-single-file.png" width="100%" alt="Single File Inspector Tab" /></a> | <a href="assets/screenshots/04-batch-scanner.png"><img src="assets/screenshots/04-batch-scanner.png" width="100%" alt="Batch Scanner Tab" /></a> |
+| **3. Live Paste Counter** | **Universal Drag & Drop** |
+| <a href="assets/screenshots/03-live-paste.png"><img src="assets/screenshots/03-live-paste.png" width="100%" alt="Live Paste Counter Tab" /></a> | <a href="assets/screenshots/01-drag-drop.png"><img src="assets/screenshots/01-drag-drop.png" width="100%" alt="Universal Drag & Drop" /></a> |
 
 ---
 
@@ -67,7 +67,7 @@ Choose your preferred format from [Releases](https://github.com/amma-dada/lineco
 
 - **Accurate Empty Line Counting**: Distinguishes between pure empty lines (`\n`), whitespace-only lines, and content lines.
 - **Ultra-Fast Parallel Engine**: SIMD-accelerated line scanning in Rust (`memchr` + `rayon`).
-- **Drag & Drop**: Drop files or entire folders to scan nested subdirectories automatically.
+- **Universal Drag & Drop**: Drop files or entire folders anywhere on the window or into embedded dropzones.
 - **Single File Inspector**: Line-by-line syntax viewer, empty-line navigation, and 1-click cleaned code export.
 - **In-App Code Editor**: Built-in editor with Find & Replace (<kbd>Ctrl</kbd>+<kbd>F</kbd>, <kbd>Ctrl</kbd>+<kbd>H</kbd>), jump to line (<kbd>Ctrl</kbd>+<kbd>G</kbd>), and soft line wrap (<kbd>Ctrl</kbd>+<kbd>W</kbd>).
 - **Batch Scanner & Export**: Scan directories and export results as Markdown tables or CSV files.
@@ -104,7 +104,7 @@ Choose your preferred format from [Releases](https://github.com/amma-dada/lineco
 | <kbd>Ctrl</kbd> + <kbd>G</kbd> | Go to Line |
 | <kbd>Ctrl</kbd> + <kbd>W</kbd> | Toggle Soft Line Wrap |
 | <kbd>Alt</kbd> + <kbd>E</kbd> / <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>E</kbd> | Next / Previous Empty Line |
-| <kbd>Ctrl</kbd> + <kbd>1</kbd> - <kbd>4</kbd> | Switch Tabs (Drag & Drop, Single File, Live Paste, Batch Scanner) |
+| <kbd>Ctrl</kbd> + <kbd>1</kbd> - <kbd>3</kbd> | Switch Tabs (Single File, Batch Scanner, Live Paste) |
 
 ---
 
