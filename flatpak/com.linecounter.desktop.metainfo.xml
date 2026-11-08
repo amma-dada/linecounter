@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.linecounter.desktop</id>
+  <metadata_license>Apache-2.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <name>LineCounter</name>
+  <summary>High-performance code line counter and file inspector</summary>
+  <description>
+    <p>
+      LineCounter is an ultra-fast cross-platform line and code counting application.
+      It accurately counts all lines including pure empty lines, whitespace-only lines,
+      and content lines with recursive directory scanning, instant inspection, and live text editing.
+    </p>
+  </description>
+  <launchable type="desktop-id">com.linecounter.desktop.desktop</launchable>
+  <url type="homepage">https://github.com/amma-dada</url>
+  <url type="bugtracker">https://github.com/amma-dada</url>
+  <categories>
+    <category>Development</category>
+    <category>Utility</category>
+    <category>TextEditor</category>
+  </categories>
+  <provides>
+    <binary>linecounter-desktop</binary>
+    <binary>linecounter</binary>
+  </provides>
+  <developer id="com.linecounter.desktop">
+    <name>Mortada (Dada)</name>
+  </developer>
+  <developer_name>Mortada (Dada)</developer_name>
+  <releases>
+    <release version="1.0.0" date="2026-11-04">
+      <description>
+        <p>Initial release: ultra-fast Rust core, instant directory batch scanning, single file inspector, live paste, and soft line wrap.</p>
+      </description>
+    </release>
+  </releases>
+</component>

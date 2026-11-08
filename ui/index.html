@@ -1,0 +1,3726 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: #070a12; color: #f8fafc;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LineCounter</title>
+    <style>
+        html, body {
+            background-color: #070a12 !important;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            /* Cohesive 2-3 Color Palette: Neutral Slate + Indigo Primary + Emerald Accent */
+            --bg-base: #070a12;
+            --bg-surface: #0e1526;
+            --bg-card: #131d33;
+            --bg-card-hover: #192642;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-focus: #6366f1;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            /* Color 1: Primary Action & Brand (Indigo) */
+            --accent-primary: #6366f1;
+            --accent-primary-hover: #4f46e5;
+            
+            /* Color 2: Metric Accent (Emerald) */
+            --accent-metric: #10b981;
+            --accent-metric-bg: rgba(16, 185, 129, 0.12);
+
+            --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, Menlo, Monaco, Consolas, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        html, body {
+            height: 100vh;
+            width: 100vw;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Top Header */
+        header {
+            background: rgba(14, 21, 38, 0.95);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0.6rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            z-index: 20;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .brand-icon svg {
+            width: 32px;
+            height: 32px;
+            display: block;
+        }
+
+        .brand-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+        }
+
+        /* Nav Tabs */
+        .tab-nav {
+            display: flex;
+            background: rgba(19, 29, 51, 0.85);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 3px;
+            gap: 3px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.42rem 0.95rem;
+            border-radius: 7px;
+            font-size: 0.835rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            color: #ffffff;
+            background: var(--accent-primary);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Gear Button */
+        .btn-gear {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-gear:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.08);
+            transform: rotate(30deg);
+        }
+
+        /* In-App Settings Strip (Directly visible on the app interface) */
+        .app-settings-strip {
+            background: rgba(14, 21, 38, 0.6);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0.35rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.775rem;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .settings-switches {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .setting-switch-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .setting-switch-item:hover {
+            color: var(--text-primary);
+        }
+
+        /* Switches */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 32px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #334155;
+            transition: .2s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .2s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent-primary); }
+        input:checked + .slider:before { transform: translateX(14px); }
+
+        /* Main View Container */
+        main {
+            flex: 1;
+            min-height: 0;
+            padding: 0.85rem 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .tab-content {
+            display: none;
+            height: 100%;
+            min-height: 0;
+            flex-direction: column;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* ==================== TAB: DEDICATED DRAG & DROP ==================== */
+        .drop-page-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+            gap: 1rem;
+        }
+
+        .hero-dropzone {
+            flex: 1;
+            min-height: 280px;
+            border: 2px dashed rgba(99, 102, 241, 0.4);
+            border-radius: 16px;
+            background: rgba(19, 29, 51, 0.45);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2.5rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .hero-dropzone:hover, .hero-dropzone.dragover {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.12);
+            box-shadow: 0 0 35px rgba(99, 102, 241, 0.25);
+            transform: scale(1.003);
+        }
+
+        .drop-icon-circle {
+            width: 68px;
+            height: 68px;
+            border-radius: 18px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .drop-icon-circle svg {
+            width: 34px;
+            height: 34px;
+            stroke: #818cf8;
+        }
+
+        .drop-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 0.45rem;
+        }
+
+        .drop-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            max-width: 480px;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .drop-actions {
+            display: flex;
+            gap: 0.85rem;
+            align-items: center;
+        }
+
+        /* Drop Results Card */
+        .drop-results-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 1.15rem 1.5rem;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .drop-results-card.show {
+            display: flex;
+        }
+
+        /* ==================== TAB: SINGLE FILE ==================== */
+        .file-select-box {
+            display: flex;
+            gap: 0.65rem;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 0.45rem 0.75rem;
+            margin-bottom: 0.75rem;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .file-select-box input[type="text"] {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            padding: 0.35rem 0.5rem;
+            outline: none;
+            user-select: text;
+        }
+
+        .file-select-box input[type="text"]::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.825rem;
+            font-weight: 600;
+            padding: 0.45rem 0.95rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+        .btn-primary:hover {
+            background: var(--accent-primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Metric Cards Grid: Unified, Cohesive Design */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 0.85rem 1.1rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-1px);
+            border-color: rgba(255, 255, 255, 0.16);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: var(--accent-primary);
+        }
+
+        .card-label {
+            font-size: 0.725rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-badge {
+            color: var(--accent-metric);
+            background: var(--accent-metric-bg);
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+
+        .metric-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 0.2rem;
+            color: #ffffff;
+        }
+
+        .metric-value.highlight {
+            color: var(--accent-metric);
+        }
+
+        .metric-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Content Viewer Box - Stretches full remaining height */
+        .viewer-box {
+            background: #0d121f;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            position: relative;
+        }
+
+        .viewer-header {
+            background: rgba(20, 30, 51, 0.8);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0.45rem 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            gap: 0.75rem;
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 0.35rem;
+            align-items: center;
+        }
+
+        .pill-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.65rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .pill-btn:hover { color: var(--text-primary); }
+        .pill-btn.active {
+            background: var(--accent-primary);
+            color: #ffffff;
+            border-color: var(--accent-primary);
+        }
+
+        .search-input-box {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 0.15rem 0.5rem;
+            gap: 0.35rem;
+        }
+
+        .search-input-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 0.75rem;
+            outline: none;
+            width: 140px;
+            user-select: text;
+        }
+
+        /* Number Input Reset (No Spinners) */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
+        .goto-box {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            overflow: hidden;
+            height: 26px;
+        }
+
+        .goto-box input {
+            width: 95px;
+            min-width: 95px;
+            height: 100%;
+            padding: 0 0.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 0.775rem;
+            font-family: var(--font-mono);
+            outline: none;
+            text-align: center;
+        }
+
+        .goto-box button {
+            height: 100%;
+            border: none;
+            border-left: 1px solid var(--border-subtle);
+            border-radius: 0;
+            padding: 0 0.6rem;
+            background: rgba(255, 255, 255, 0.04);
+            display: flex;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .goto-box button:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+
+        .code-container {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            user-select: text;
+        }
+
+        .code-container.wrap-lines .line-content {
+            white-space: pre-wrap !important;
+            word-break: break-all;
+        }
+
+        .code-line {
+            display: flex;
+            padding: 0.08rem 0.85rem;
+            transition: background 0.12s;
+        }
+
+        .code-line:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .line-num {
+            width: 45px;
+            color: #475569;
+            user-select: none;
+            text-align: right;
+            padding-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .line-content {
+            flex: 1;
+            white-space: pre;
+            overflow-x: auto;
+            color: #e2e8f0;
+        }
+
+        .empty-tag {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.725rem;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.06);
+            padding: 0.05rem 0.45rem;
+            border-radius: 4px;
+            font-style: italic;
+        }
+
+        .whitespace-tag {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.725rem;
+            color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.12);
+            padding: 0.05rem 0.45rem;
+            border-radius: 4px;
+            font-style: italic;
+        }
+
+        .highlight-match {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 2px;
+            color: #ffffff;
+        }
+
+        .code-line.line-is-empty {
+            background: rgba(99, 102, 241, 0.04);
+        }
+
+        .code-line.flash-empty-highlight {
+            animation: pulse-empty 1.4s ease-out;
+        }
+
+        @keyframes pulse-empty {
+            0% {
+                background: rgba(99, 102, 241, 0.45);
+                box-shadow: inset 0 0 0 1px var(--accent-primary);
+            }
+            100% {
+                background: rgba(99, 102, 241, 0.04);
+                box-shadow: inset 0 0 0 1px transparent;
+            }
+        }
+
+        /* Floating Find & Replace Card (Matches Reference Photo Exactly) */
+        .find-replace-card {
+            position: absolute;
+            top: 48px;
+            right: 14px;
+            z-index: 150;
+            width: 330px;
+            background: #181c25;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75), 0 0 1px rgba(255, 255, 255, 0.3);
+            padding: 8px 10px;
+            box-sizing: border-box;
+            backdrop-filter: blur(16px);
+        }
+
+        .find-row-top {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #find-widget-input {
+            flex: 1;
+            min-width: 0;
+            background: #0f131c;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 0.85rem;
+            padding: 0.35rem 0.55rem;
+            outline: none;
+            font-family: inherit;
+        }
+        #find-widget-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+        }
+
+        .find-widget-count {
+            font-size: 0.775rem;
+            color: #8b949e;
+            white-space: nowrap;
+            padding: 0 4px;
+            user-select: none;
+        }
+
+        .find-icon-btn {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            font-size: 0.95rem;
+            width: 26px;
+            height: 26px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .find-icon-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+        }
+        .find-icon-btn.active {
+            color: #38bdf8 !important;
+            background: rgba(56, 189, 248, 0.15);
+        }
+
+        .find-row-replace {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #replace-widget-input {
+            width: 100%;
+            box-sizing: border-box;
+            background: #0f131c;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 0.85rem;
+            padding: 0.35rem 0.55rem;
+            outline: none;
+            font-family: inherit;
+        }
+        #replace-widget-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+        }
+
+        .find-replace-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-find-link {
+            background: transparent;
+            border: none;
+            color: #8b949e;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 4px 6px;
+            transition: color 0.15s;
+        }
+        .btn-find-link:hover {
+            color: #ffffff;
+        }
+
+        .btn-find-primary {
+            background: #2563eb;
+            border: none;
+            color: #ffffff;
+            font-size: 0.825rem;
+            font-weight: 600;
+            padding: 0.35rem 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.15s ease;
+        }
+        .btn-find-primary:hover {
+            background: #1d4ed8;
+        }
+
+        /* Single File Editor Container */
+        .editor-container {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            background: #090d16;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .editor-gutter {
+            width: 55px;
+            min-width: 55px;
+            background: #060910;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            color: #475569;
+            padding: 0.6rem 0.5rem 0.6rem 0;
+            text-align: right;
+            user-select: none;
+            overflow: hidden;
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+            white-space: pre;
+            box-sizing: border-box;
+        }
+
+        .editor-textarea {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            background: transparent;
+            color: #f1f5f9;
+            border: none;
+            outline: none;
+            resize: none;
+            padding: 0.6rem 0.85rem;
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+            white-space: pre;
+            overflow: auto;
+            tab-size: 4;
+            box-sizing: border-box;
+        }
+
+        .batch-table tbody tr {
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .batch-table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.08) !important;
+        }
+
+        .ext-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 0.725rem;
+            padding: 0.15rem 0.55rem;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .ext-pill:hover, .ext-pill.active {
+            background: var(--accent-primary);
+            color: #ffffff;
+            border-color: var(--accent-primary);
+        }
+
+        .bin-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            margin-left: 0.4rem;
+        }
+
+        /* ==================== TAB: LIVE PASTE ==================== */
+        .live-textarea {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            background: #0d121f;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            color: #f8fafc;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            padding: 1.15rem;
+            outline: none;
+            resize: none;
+            user-select: text;
+        }
+
+        .live-textarea:focus {
+            border-color: var(--accent-primary);
+        }
+
+        /* ==================== TAB: BATCH SCANNER ==================== */
+        .batch-controls {
+            display: flex;
+            gap: 0.65rem;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+
+        .batch-table-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            overflow: hidden;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .batch-scroll {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+        }
+
+        .batch-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.825rem;
+        }
+
+        .batch-table th {
+            background: rgba(15, 23, 42, 0.95);
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 0.65rem 0.95rem;
+            border-bottom: 1px solid var(--border-subtle);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .batch-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.15s, background 0.15s;
+        }
+        .batch-table th.sortable:hover {
+            color: #ffffff;
+            background: rgba(30, 41, 59, 0.98);
+        }
+        .sort-icon {
+            display: inline-block;
+            margin-left: 4px;
+            font-size: 0.7rem;
+            color: var(--accent-primary);
+        }
+
+        .batch-table td {
+            padding: 0.6rem 0.95rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-primary);
+        }
+
+        .batch-table tr:hover td {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .batch-footer {
+            background: rgba(15, 23, 42, 0.9);
+            padding: 0.65rem 1.15rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+        }
+
+        /* ==================== MODAL: HELP, SHORTCUTS, README ==================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 50;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.15s ease-out;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #12192c;
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            width: 600px;
+            max-width: 90vw;
+            max-height: 85vh;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            background: rgba(20, 30, 51, 0.85);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0.85rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .modal-header h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #ffffff;
+        }
+
+        .modal-body {
+            padding: 1.35rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .help-section h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--accent-metric);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .help-section p {
+            font-size: 0.825rem;
+            color: var(--text-secondary);
+            line-height: 1.55;
+            margin-bottom: 0.4rem;
+        }
+
+        .shortcuts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+        }
+
+        .shortcut-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 0.45rem 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.8rem;
+        }
+
+        kbd {
+            background: #1f2b48;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+            border-radius: 4px;
+            padding: 0.15rem 0.45rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: #e2e8f0;
+        }
+
+        /* Connect & Support Cards */
+        .connect-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+
+        .connect-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .connect-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .connect-info {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .connect-icon-box {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            cursor: pointer;
+            border: none !important;
+            outline: none;
+            transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .connect-icon-box:hover {
+            transform: translateY(-2px) scale(1.06);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+        }
+
+        .connect-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #ffffff;
+            margin-bottom: 0.15rem;
+        }
+
+        .connect-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .connect-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* Connect Modal Brand Buttons */
+        .btn-brand-github {
+            background: #24292f !important;
+            border: 1px solid #444c56 !important;
+            color: #ffffff !important;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.775rem;
+            transition: all 0.15s ease;
+        }
+        .btn-brand-github:hover {
+            background: #32383f !important;
+            border-color: #57606a !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-brand-linkedin {
+            background: #0a66c2 !important;
+            border: 1px solid #0077b5 !important;
+            color: #ffffff !important;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.775rem;
+            transition: all 0.15s ease;
+        }
+        .btn-brand-linkedin:hover {
+            background: #004182 !important;
+            box-shadow: 0 2px 8px rgba(10, 102, 194, 0.4);
+        }
+
+        .btn-brand-email {
+            background: #ea4335 !important;
+            border: 1px solid #d93025 !important;
+            color: #ffffff !important;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.775rem;
+            transition: all 0.15s ease;
+        }
+        .btn-brand-email:hover {
+            background: #d93025 !important;
+            box-shadow: 0 2px 8px rgba(234, 67, 53, 0.4);
+        }
+
+        /* ==================== INTERACTIVE HOVER CARDS (ALL OPTIONS) ==================== */
+        .connect-card.interactive-hover-card {
+            position: relative;
+            background: rgba(18, 23, 39, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            z-index: 1;
+            isolation: isolate;
+        }
+
+        .connect-card.interactive-hover-card::before {
+            content: '';
+            position: absolute;
+            inset: -1.5px;
+            border-radius: 11px;
+            padding: 1.5px;
+            background: var(--card-gradient, linear-gradient(135deg, #818cf8, #6366f1));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.35s ease, filter 0.35s ease;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .connect-card.interactive-hover-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(
+                circle 140px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                var(--card-glow-color, rgba(99, 102, 241, 0.12)),
+                transparent 70%
+            );
+            opacity: 0;
+            transition: opacity 0.35s ease;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .connect-card.interactive-hover-card:hover {
+            border-color: transparent !important;
+            transform: translateY(-2px);
+            box-shadow: var(--card-hover-shadow, 0 10px 28px -6px rgba(0, 0, 0, 0.4));
+        }
+
+        .connect-card.interactive-hover-card:hover::before {
+            opacity: 1;
+            filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.3));
+        }
+
+        .connect-card.interactive-hover-card:hover::after {
+            opacity: 1;
+        }
+
+        /* 1. GitHub Card */
+        .connect-card.connect-card-github {
+            --card-gradient: linear-gradient(var(--card-angle, 135deg), #ffffff 0%, #cbd5e1 35%, #818cf8 70%, #6366f1 100%);
+            --card-glow-color: rgba(255, 255, 255, 0.12);
+            --card-hover-shadow: 0 10px 28px -6px rgba(255, 255, 255, 0.15), 0 10px 28px -6px rgba(129, 140, 248, 0.25);
+        }
+
+        /* 2. LinkedIn Card */
+        .connect-card.connect-card-linkedin {
+            --card-gradient: linear-gradient(var(--card-angle, 135deg), #0077b5 0%, #0a66c2 40%, #38bdf8 80%, #0284c7 100%);
+            --card-glow-color: rgba(10, 102, 194, 0.2);
+            --card-hover-shadow: 0 10px 28px -6px rgba(10, 102, 194, 0.35), 0 10px 28px -6px rgba(56, 189, 248, 0.25);
+        }
+
+        /* 3. Gmail Card */
+        .connect-card.connect-card-gmail {
+            --card-gradient: linear-gradient(var(--card-angle, 135deg), #4285F4 0%, #34A853 30%, #FBBC05 60%, #EA4335 100%);
+            --card-glow-color: rgba(234, 67, 53, 0.15);
+            --card-hover-shadow: 0 10px 28px -6px rgba(234, 67, 53, 0.25), 0 10px 28px -6px rgba(66, 133, 244, 0.25);
+        }
+
+        /* 4. Support Card (Ko-fi) */
+        .connect-card.connect-card-kofi {
+            --card-gradient: linear-gradient(var(--card-angle, 135deg), #ff5e5b 0%, #ff7875 40%, #ff9472 80%, #ff5e5b 100%);
+            --card-glow-color: rgba(255, 94, 91, 0.18);
+            --card-hover-shadow: 0 10px 28px -6px rgba(255, 94, 91, 0.35);
+        }
+
+        /* Pink pill Support button with fast-beating Heart */
+        .btn-brand-kofi {
+            background: rgba(255, 42, 133, 0.16) !important;
+            border: 1px solid rgba(255, 42, 133, 0.45) !important;
+            color: #ff2a85 !important;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 9999px !important;
+            padding: 0.42rem 1.15rem;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            line-height: 1;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-brand-kofi:hover {
+            background: rgba(255, 42, 133, 0.28) !important;
+            color: #ff529a !important;
+            border-color: #ff2a85 !important;
+            box-shadow: 0 4px 18px rgba(255, 42, 133, 0.45) !important;
+            transform: translateY(-1.5px);
+        }
+        .btn-brand-kofi svg {
+            fill: #ff2a85;
+            transition: fill 0.25s ease;
+        }
+        .btn-brand-kofi:hover svg {
+            fill: #ff529a;
+            animation: heartThumpFast 0.65s infinite ease-in-out;
+        }
+        @keyframes heartThumpFast {
+            0% { transform: scale(1); }
+            14% { transform: scale(1.35); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.35); }
+            70% { transform: scale(1); }
+            100% { transform: scale(1); }
+        }
+
+        /* ==================== GLOBAL APP MICRO-INTERACTIONS & EFFECTS ==================== */
+        /* 1. Shimmer sweep on primary buttons */
+        .hero-actions .btn, .drop-actions .btn, .batch-actions .btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hero-actions .btn:hover, .drop-actions .btn:hover, .batch-actions .btn:hover {
+            transform: translateY(-1.5px);
+        }
+        .hero-actions .btn::after, .drop-actions .btn::after, .batch-actions .btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -70%;
+            width: 45%;
+            height: 200%;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: rotate(30deg);
+            transition: all 0.65s ease;
+            pointer-events: none;
+        }
+        .hero-actions .btn:hover::after, .drop-actions .btn:hover::after, .batch-actions .btn:hover::after {
+            left: 140%;
+        }
+
+        /* 2. Floating animation for dropzone icon */
+        @keyframes floatDropIcon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .drop-icon-circle {
+            animation: floatDropIcon 3.5s ease-in-out infinite;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.25);
+            transition: all 0.3s ease;
+        }
+        .hero-dropzone:hover .drop-icon-circle {
+            transform: scale(1.08);
+            box-shadow: 0 6px 25px rgba(99, 102, 241, 0.45);
+        }
+
+        /* 3. Metric cards lift & glow */
+        .metric-card {
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease !important;
+        }
+        .metric-card:hover {
+            transform: translateY(-3px) !important;
+            border-color: rgba(99, 102, 241, 0.4) !important;
+            box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5), 0 0 16px -2px rgba(99, 102, 241, 0.2) !important;
+        }
+
+        /* 4. Tab navigation hover micro-interactions */
+        .tab-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        .tab-btn:hover {
+            transform: translateY(-1px);
+        }
+        .tab-btn.active {
+            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.5), 0 0 14px rgba(99, 102, 241, 0.2) !important;
+        }
+
+        /* 5. Smooth modal scale-in */
+        @keyframes modalScaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .modal-box {
+            animation: modalScaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* 6. Settings toggle switch glow */
+        input:checked + .slider {
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.6) !important;
+        }
+
+        /* 7. Toast pop & glow */
+        .toast.show {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 18px rgba(16, 185, 129, 0.35) !important;
+        }
+        #batch-tbody tr {
+            transition: background 0.15s ease;
+        }
+        #batch-tbody tr:hover {
+            background: rgba(99, 102, 241, 0.12) !important;
+            cursor: pointer;
+        }
+        #batch-tbody tr:hover td:first-child {
+            color: #818cf8 !important;
+        }
+
+        /* Toast: positioned in middle free space so it never hides buttons */
+        .toast {
+            position: fixed;
+            top: 48%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.92);
+            background: #1e293b;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 0.75rem 1.4rem;
+            border-radius: 10px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7), 0 0 1px rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+            z-index: 1000;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.97); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        ::-webkit-scrollbar { width: 7px; height: 7px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body style="background-color: #070a12;">
+    <!-- Top Header -->
+    <header>
+        <div class="brand">
+            <div class="brand-icon" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: transparent; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);">
+                <img src="data:image/png;base64,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VaqUTM2aNbjzzjuZPn06b731FlKaKIpF7KpV0/jpp584ffo0qqrF2fbxjGARSlVVwuEwTzzxBAMG9McwQjRp0oTly7/kxRdf5KOPPqJXr16EwyFUVVA8M5VM4pQhFCFE+PDp0zV379n13rhx40RGMRxZ6JcZoM4Bo02DS8buOXLkbxFt/yzX/IKQwkRIJeLutewGm1gFnTLWZ6ZpULlyZV588QVq1arF1KlTWbx4sePxk1LicrnQdRdnzuRGxDkU7im17HZNU/H7/bzyyiu43ToPPHA/TzzxZ9LSqvD4449z33330alTJ2677TY8nsL8CqWHs1UCE7cBYdMMp+q61qBmzSe37Pn5BZuWia5PqCiMs0S/md78fy79af/ex3MCAVNTFLU0eFtIy40tlIKzPP5v22QUQiEn5xSjRo1yvnO73RExb8UHQqEAgYAfVU30SPFmnsUYNrN9//339OlzPQD/+Mc/CQR8CCE4depUlHSK9tpVXEhAUxQ1JxAwj544+Xh68//5aM6OzT/bNI2/PiG77Yg86dETR58+4fOlKEKYxdv4JUNBuzxfB4if/YGAj2AwAICmaei613nFu3mFUNA0Le6zorts32/fvn2kpaUBYJomSUnJSClJT09n27ZtKIrVtqqWqupTZpAgFCHMEz5fytETR58G5I5C6FeAAcaBMgeM7q3aNz2Rm3uT3wibihCl9uQSw9EB4glkv7cVvzvuuJMrrrgSwwijKAqGYTiveNjauqU8Ru4l4++TeI0+duwYlSolRxjIxO/3UbNmTTp37syMGTMwTZPc3NMEAv4CTFpRoQih+o2weSI396burdo3nQNGIqugwAc2pxw+cmhsji+gK0LI0pr98YhX9mxHUCgUonr1mowe/SgnTpwocG30b/LbipYkMVc57doz2LYwbGRnZyMlJCdbM980TcaMGcOaNWsIh8Ncd10vRowYyT333IPb7f5NMEFECsgcX0A/fOTQWMinbTTiF0wxB4xeXbrU2b51+2C/EZaaoiil/bgxcf4ozd82+0wzTO/evdmxYzs//bQbjycpwaxXCiTPxLfpRNasEDShUAhN0wowXk5ODrruJjU1lZycHACaN29OgwYNmDdvHnl5eRw/fpw9e/agKPltVnRGUIRQ/EZYnvLnDe7VpcsTc9asOUicIhPDAOkRX//hX/YNPR0IJQshwvIc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O5e5c+fStWtXevfuwz333E21atUQQnDo0GF+/vkndu3axfbt29m5c2eBenz2trDoIpGlieI2fla0ItHFodx0gGAoRLf07tSsVYM33nidypVT2b59e2STyDwWLVrEwIEDURQVXfc47lSASpUq06hRQ5o1a0bz5i3o1q0bQ4cOxev1cvLkSbZu3cqaNWtYv349R48ejbm3y+VyduqUBlMUR9yilqXosjgVBeUWDlYUja3bvuezlxezdOkSfv75J7zeZILBAL1792by5Ml8/fU3XH99Hw4ePEhyspUQYpqSvDwfW7dujcngBWvbVps2bejYsSP33nsv48aNY//+/axfv56vv/6aHTt2cPjw4QK5hHZBJ5sgZbF0RG8Ps08ss1GRUsbLzRXsduns3r2T55//G3PnzqVTp06RJE4XqqoxcuRIHnnkEdatW8fw4cNZu3YtHo8eYR4VTVMd294m2oEDBzhw4ACLFy8GrGyh9PR0OnXqxJNPPklqaiqnT59m3759ZGZmsmnTJn744QcOHjxYcCAieQXnyxD2EhCvr1SvXp1LL72U06dPs3PnzgpTRLIcN4YYePRk3nlnGs2aNePdd2eQkTHYifh5PEm8+uqrZGZm8t57Mxk/fjyTJ0+KpHcROSc4FtEz2TRNsrKy+OCDD/jggw8AqFmzJs2aNaN169a0atWKXr16UblyZXJzc9m/fz87d+4kMzOT7du388svvzg7jiF/j0BJi03bsAnbo0cPhg0bRvXq1alSpQper5dgMMisWbPYsWNHhSkjK6L+l7def33a2nUbft5/6nSapiiRGFjpQlEhEPCzatVq5s2bzz//+aqT/GkXf/7d7xqycOFC1q5dw3333QdQom3f0RnDpmnGJJDaqFq1Kk2aNKFly5Y0adKExo0bU6tWLQzD4L///S+rVq1i4cKFTkYP4JwdHH3eYCKmsO+r6zrbtm3jvffeY+vWrWRnZ7Nr1y5H8hS2BJTG6eGJ20WGTVPUTal84urOHS/5YNGiE0RofgFKxQpUVeOWW27hq6/WcezYEWbOnInLpWOaEo8niV9//YUrrmjP7NkfsWrVKm688UYOHz6Mx2PtGSyqkme0/e1yuWIOpjJNk+zsbDZs2MCGDRuc65KSkmjatCmdOnWiX79+3H///fzwww+sWbOGjRs3OucHRsPeDBLt6bPFf15eHr/88gv//ve/HaXUrmZiB4YqiqVQ7tqI5T93ceBAFtdffz3z58/n8ssvZ8yYx5HSRNe9zlbvgQMH8Mwzz/DVV1/xxBN/Zs6cjwCBx1Oyqp6JZmk8U1iJqX42b97M5s2beeONN2jYsCG9e/eme/fuDB8+HCEE2dnZ/PLLL2RmZrJ161YyMzM5depUgXQvu8aAx+Nh9uzZ7Nixg6lTp7JlyxaHCSsK8aHclwDppG3YW8CqVKnCpEmTueSSRjz00EOsW7fOqQBqFZTyc9VVnZkyZQobNqznz38ey9GjRyK5gXqREuFsEO1ZjFbgVFWlXr16NG3alDZt2tCqVSsuvvhiUlNTeeedd3j99ddjJIG9Y3jw4ME0bNiQpKQkhg4dyv3338+yZcuKjA9ciCUg6hq49frr0+pXqZatKG7p1jymS/PI0n3pUtPczsvt9kohVAnIm266Wf73v7/Ihx56WAJS171S09zS40mSgPR6k+TEiRPljh075Lhx42T16jXsKJH0eDzS5XJJTdPO6aWqasx7l8sldV2Xuq5LTdOc+0S/GjduLNu2bSsVRYm5t91W9LWDBg2SS5YsiTyXXmg/XJq7lMfberk1j6koblm/SrXsW6+/Pi2a5hfUIDVNI+Lb15k9exZr165lxYoVSCn517/+6VQJ0XUvwWCIP/3pT7Ro0ZIxY8bw5ZfL+eyzxUyc+BpZWVkIIc459BovkhPpEvF+gx9//BFIXDQi+n1KSgp33HEHmZmZZ92v8sAFP9nQ3rLl9SaTlbWf9PR0Hn74Ya66qjOBgA9VVZ1DGD0eL9u3Z3L77cPJyLiRypVTWbp0KS+//DJpaWlOKfhEBz+dbx/tfQe27mGfLZzoWlVVueuuu5g8eTJr167l6NGjPPXUU86G1IqEC84ANqwiT0kcPHiA++77I5MnT8brTYo6vcMkHA7hdnvQdS+7du3kvvtG0a9fP1JTU1m7di233367U6OnrAs12ZIgHrY0adCgAVlZWQwbNoy7777b8QQWasEUOEyvfHDBlMDCYJeGf/PNSQghuPfekVHVwvK7rCgCRbH8BgBXXnklEydOZM+ePdx+++1RJWQuzG6h6CVE1/USeRcvhBJYYSSADcMwcLt1Hn74Ybp0uZq+ffvi9+ehaS6i+dE0pXM8i8fj4ZtvvqFjx44cP36cTZs20bx5c/x+v2N7lyfs9HC7cFRF3iNY4RjA3kfo9/sYOXIkkyZNon79BgQC/oSEtHUIXffgcrm57777+Pvf/86yZcu466678Pv9BINBNE0rsf0dkwMY+ftsCWjrDBVtzY9HhWMAsIpB6LqXtWvXMn78eObPn+to24XX6bMG2uPxMH36dPr06cPIkSNZsGABTZo0iakgci6OmJKcMh7/vqKFfhOhQjIARIJHniRef/11Nm78lvfee49QKGBt5IiBncotI4piGI/Hw/fff0+HDh346quvmDdvHhMmTKBOnToxjFDY0pDodNN4JIoDRH8e720sCvbXF4JVKiwDQL4+MHLkSOrWvZiHHnoYv98Xd2hj7LkBYJ0L4Ha7cblckTpEPfF4PCxZsoQJEyZQt25dZ2korBB0cYjPSYwnfPxn0SjIPLFPUp6oEAxQ3CxTFIWMjAwefPBPdOnSFZ8vt8DJnfGwtW6Px8OBAwe4//77GTBgALqus2jRIl5//XVatWrllIe1q4wl6osdyImOCIZCIcLhsHN9fO2iipa0WhgqBANEz4j4wTFNE5fLxcGDB7njjjv44IP3ad368hIxARBjKfz666888MAD9O3bl1OnTjF9+nQWLFhAv379nFrBdlg6vg2/3+9IDSEEderUITU11bHv7TOQQ6EQSUlJzuklFR0VggGiUXDQBIYh0XUPq1at4o9//COLFy/iuuuuw+fLRVW1SFl5a69PYW1GM8K+ffsYO3Ys6enpfPrppzz66KOsW7eOBx54gBo1ajgSwY7eVa1alSeffJK3336bRYsWsXr1aubPn8/q1au59NJLndIw1157LStXrmT16tU89thjjgezIuOCHBolEhAqeu1MBEsp9LBw4UJuvfVWpkx5i0cffZRAIM/5fXGIZ4S8vDymTp1Keno6zz//vLPN+95773XEOFip5x6Phy1btvDGG29w77330rNnT06fPk29evUQQtCwYUNeeeUVXnnlFYYNG8add97JxRdf7FQ5q6i4IIdGJfIGFi4u87eGWRp+EqtXr6Zz56uYO3cerVu3Yvjw2yNx/sJ3c0WbkDYjqKrqhGc/++wzPvvsM6644go6duwI5NcCPnjwIE8//XRMezVr1kRKyapVqzBNk+PHj9OzZ0+OHDkCwPHjx6lTp44TqKqoy0EBCVAWaWBFofjZIWJe4XAIXfeSlZVFhw4dqFQphQULFjgz7WwUL9tla+/v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" alt="LineCounter" style="width: 32px; height: 32px; object-fit: contain; display: block; border-radius: 8px;">
+            </div>
+            <div class="brand-title">LineCounter</div>
+        </div>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('drop')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                Drag & Drop
+            </button>
+            <button class="tab-btn" onclick="switchTab('file')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                Single File
+            </button>
+            <button class="tab-btn" onclick="switchTab('paste')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                Live Paste
+            </button>
+            <button class="tab-btn" onclick="switchTab('batch')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                Batch Scanner
+            </button>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.65rem;">
+            <button class="pill-btn" onclick="toggleConnectModal()" style="display: flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.8rem; font-size: 0.8rem; border-color: rgba(99, 102, 241, 0.45); color: #c7d2fe; background: rgba(99, 102, 241, 0.15); cursor: pointer; border-radius: 8px; font-weight: 600;" title="Follow & Connect (GitHub, LinkedIn, Email, Ko-fi, PayPal)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                Follow me
+            </button>
+            <button class="btn-gear" onclick="toggleHelpModal()" title="Help, README & Shortcuts">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- In-App Settings Strip (Always directly visible on the app) -->
+    <div class="app-settings-strip">
+        <div class="settings-switches">
+            <span style="font-weight:700; color:#cbd5e1;">Counting Rules:</span>
+
+            <label class="setting-switch-item" title="Lines containing only spaces or tabs are classified as empty lines">
+                <div class="switch">
+                    <input type="checkbox" id="opt-ws" checked onchange="recalculateCurrent()">
+                    <span class="slider"></span>
+                </div>
+                <span>Whitespace as Empty</span>
+            </label>
+
+            <label class="setting-switch-item" title="Include trailing empty line if the file ends with a newline character">
+                <div class="switch">
+                    <input type="checkbox" id="opt-editor" onchange="recalculateCurrent()">
+                    <span class="slider"></span>
+                </div>
+                <span>Editor Trailing Newline</span>
+            </label>
+
+            <label class="setting-switch-item" title="Scan all subdirectories recursively when processing folders">
+                <div class="switch">
+                    <input type="checkbox" id="opt-recursive" checked>
+                    <span class="slider"></span>
+                </div>
+                <span>Recursive Subdirectories</span>
+            </label>
+        </div>
+
+        <div id="status-quick-info" style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">
+            Ready
+        </div>
+    </div>
+
+    <main>
+        <!-- TAB 0: DEDICATED DRAG & DROP PAGE -->
+        <div id="tab-drop" class="tab-content active">
+            <div class="drop-page-container">
+                <div class="hero-dropzone" id="hero-dropzone" onclick="openFileNative()">
+                    <div class="drop-icon-circle">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    </div>
+                    <h2 class="drop-title">Drag & Drop Any File or Directory Here</h2>
+                    <p class="drop-subtitle">
+                        Drop any file for instant line-by-line inspection, or drop any directory to automatically scan all nested subdirectories.
+                    </p>
+                    <div class="drop-actions" onclick="event.stopPropagation()">
+                        <button class="btn btn-primary" onclick="openBatchFilesNative()">📂 Choose Files</button>
+                        <button class="btn btn-secondary" onclick="openFolderNative()">📁 Choose Folder</button>
+                    </div>
+                </div>
+
+                <div class="drop-results-card" id="drop-results-card">
+                    <div>
+                        <div id="drop-result-title" style="font-weight:700; font-size:1.05rem; color:#ffffff; margin-bottom:0.25rem;"></div>
+                        <div id="drop-result-stats" style="font-size:0.825rem; color:var(--text-secondary); font-family:var(--font-mono);"></div>
+                    </div>
+                    <button class="btn btn-primary" id="drop-view-btn">
+                        View Full Details ➔
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 1: Single File Inspector -->
+        <div id="tab-file" class="tab-content">
+            <div id="back-to-batch-banner" style="display:none; margin-bottom: 0.85rem;">
+                <button class="btn btn-secondary" onclick="returnToBatchScanner()" style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.4rem 0.95rem; font-size: 0.825rem; font-weight: 600; background: rgba(99, 102, 241, 0.16); border: 1px solid rgba(99, 102, 241, 0.4); color: #c7d2fe; border-radius: 8px; cursor: pointer; transition: all 0.15s ease;">
+                    ← Back to Batch Scanner (<span id="batch-return-count">0</span> files)
+                </button>
+            </div>
+
+            <div class="file-select-box" id="file-dropzone">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                <input type="text" id="filepath-input" placeholder="e.g. C:\Projects\my-app\main.py or Browse..." onkeydown="if(event.key==='Enter') countFromPathInput()">
+                <input type="file" id="file-input-hidden" style="display:none;" onchange="handleFilePicked(this.files[0])">
+                <button class="btn btn-primary" onclick="openBatchFilesNative()">Browse Files</button>
+            </div>
+
+            <!-- 4 Metric Cards (Cohesive styling) -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="card-label">
+                        <span>Total Lines</span>
+                        <span class="card-badge">All Lines</span>
+                    </div>
+                    <div class="metric-value highlight" id="m-total">0</div>
+                    <div class="metric-desc">Includes every empty line</div>
+                </div>
+
+                <div class="metric-card" onclick="jumpToEmptyLine(1)" style="cursor: pointer;" title="Click to jump to the first empty line">
+                    <div class="card-label">
+                        <span>Empty Lines</span>
+                        <span class="card-badge" id="m-empty-pct">0%</span>
+                    </div>
+                    <div class="metric-value" id="m-empty">0</div>
+                    <div class="metric-desc" id="m-empty-sub">Pure: 0 • Whitespace: 0 (Click to jump)</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="card-label">
+                        <span>Content Lines</span>
+                        <span class="card-badge" id="m-content-pct">0%</span>
+                    </div>
+                    <div class="metric-value" id="m-content">0</div>
+                    <div class="metric-desc">Lines with visible text</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="card-label">
+                        <span>File Stats</span>
+                        <span class="card-badge" id="m-ending">LF</span>
+                    </div>
+                    <div class="metric-value" id="m-size">0 B</div>
+                    <div class="metric-desc" id="m-words">0 words • 0 chars</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
+                        Max Line: <span id="m-max-len" style="color:var(--accent-primary); font-weight:600; cursor:pointer;" onclick="jumpToLongestLine()" title="Click to jump to longest line">0 chars</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Code Viewer: Stretches full remaining height -->
+            <div class="viewer-box">
+                <div class="viewer-header">
+                    <div class="filter-pills">
+                        <button class="pill-btn active" onclick="setLineFilter('all', this)" id="filter-all-btn">All Lines</button>
+                        <button class="pill-btn" onclick="setLineFilter('empty', this)" id="filter-empty-btn">Empty Only</button>
+                        <button class="pill-btn" onclick="setLineFilter('content', this)" id="filter-content-btn">Content Only</button>
+                        
+                        <div class="search-input-box">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" id="viewer-search" placeholder="Filter lines..." oninput="onSearchInput()">
+                            <span id="search-count" style="font-size:0.7rem; color:var(--text-muted);"></span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                        <!-- Built-in Go to Line Box -->
+                        <div class="goto-box" title="Enter line number and press Enter or click # Go to (Ctrl+G to focus)">
+                            <input type="number" id="goto-line-input" placeholder="Line #" min="1"
+                                   onkeydown="if(event.key === 'Enter') executeGoToLine();">
+                            <button onclick="executeGoToLine()" title="Jump to entered line (or press Enter in box)">
+                                # Go to
+                            </button>
+                        </div>
+                        <button class="pill-btn" id="btn-open-find" onclick="openFindWidget(false)" title="Find & Replace text in file (Ctrl+F / Ctrl+H)">🔍 Find</button>
+                        <button class="pill-btn" id="btn-toggle-editor" onclick="toggleEditorMode()" title="Toggle Single File Edit Mode (Ctrl+E)"><span id="edit-mode-icon">✏️</span> <span id="edit-mode-lbl">Edit</span></button>
+                        <button class="pill-btn" id="btn-save-file" onclick="saveCurrentFile()" style="display:none; background:#2563eb; color:#fff; border-color:#3b82f6;" title="Save edits to disk (Ctrl+S)">💾 Save</button>
+                        <button class="pill-btn" id="btn-revert-file" onclick="revertCurrentFile()" style="display:none;" title="Revert all unsaved edits">↩ Revert</button>
+                        <button class="pill-btn" id="btn-prev-empty" onclick="jumpToEmptyLine(-1)" title="Previous Empty Line (Alt+Shift+E)">⬆ Prev Empty</button>
+                        <button class="pill-btn" id="btn-next-empty" onclick="jumpToEmptyLine(1)" title="Next Empty Line (Alt+E)">⬇ Next Empty</button>
+                        <button class="pill-btn" id="btn-wrap-lines" onclick="toggleLineWrap()" title="Toggle Soft Line Wrap (Ctrl+W) — wrap long lines within viewport or scroll horizontally">↩ Wrap</button>
+                        <button class="btn btn-secondary" style="padding: 0.25rem 0.65rem; font-size: 0.775rem;" onclick="copyCleanedContent()" title="Copy content with all empty lines removed">
+                            🧹 Cleaned
+                        </button>
+                        <button class="btn btn-secondary" style="padding: 0.25rem 0.65rem; font-size: 0.775rem;" onclick="copyStatsSummary()">
+                            📋 Copy Summary
+                        </button>
+                        <button class="btn btn-secondary" style="padding: 0.25rem 0.65rem; font-size: 0.775rem;" onclick="copyStatsMarkdown()">
+                            Markdown
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Floating Find & Replace Widget Matching Image Reference -->
+                <div class="find-replace-card" id="find-replace-card" style="display: none;">
+                    <div class="find-row-top">
+                        <input type="text" id="find-widget-input" placeholder="Find..." autocomplete="off" spellcheck="false"
+                               oninput="onFindWidgetInput()" onkeydown="handleFindKeydown(event)">
+                        <span class="find-widget-count" id="find-widget-count">0 of 0</span>
+                        <button type="button" class="find-icon-btn" id="find-widget-prev" onclick="findNavigate(-1)" title="Previous match (Shift+Enter)">↑</button>
+                        <button type="button" class="find-icon-btn" id="find-widget-next" onclick="findNavigate(1)" title="Next match (Enter)">↓</button>
+                        <button type="button" class="find-icon-btn" id="find-widget-toggle-replace" onclick="toggleReplaceRow()" title="Toggle Replace (Ctrl+H)">⇄</button>
+                        <button type="button" class="find-icon-btn" id="find-widget-close" onclick="closeFindWidget()" title="Close (Escape)">✕</button>
+                    </div>
+                    <div class="find-row-replace" id="find-row-replace" style="display: none;">
+                        <input type="text" id="replace-widget-input" placeholder="Replace with..." autocomplete="off" spellcheck="false"
+                               onkeydown="if(event.key==='Enter') executeReplaceOne()">
+                        <div class="find-replace-actions">
+                            <button type="button" class="btn-find-link" onclick="executeReplaceAll()">Replace all</button>
+                            <button type="button" class="btn-find-primary" onclick="executeReplaceOne()">Replace ↵</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-container" id="preview-lines">
+                    <div style="padding: 2.5rem; text-align: center; color: var(--text-muted);">
+                        Select or drop a file to view line-by-line inspection
+                    </div>
+                </div>
+
+                <div class="editor-container" id="editor-container" style="display: none;">
+                    <div class="editor-gutter" id="editor-gutter"></div>
+                    <textarea class="editor-textarea" id="editor-textarea" spellcheck="false" wrap="off"
+                              oninput="onEditorInput()" onscroll="syncEditorScroll()"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Live Paste Counter -->
+        <div id="tab-paste" class="tab-content">
+            <div class="metrics-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 0.75rem;">
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="card-label">Total Lines</div>
+                    <div class="metric-value highlight" id="p-total" style="font-size: 1.6rem;">0</div>
+                </div>
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="card-label">Empty Lines</div>
+                    <div class="metric-value" id="p-empty" style="font-size: 1.6rem;">0</div>
+                </div>
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="card-label">Content Lines</div>
+                    <div class="metric-value" id="p-content" style="font-size: 1.6rem;">0</div>
+                </div>
+                <div class="metric-card" style="padding: 0.85rem 1rem;">
+                    <div class="card-label">Words & Chars</div>
+                    <div class="metric-value" id="p-words" style="font-size: 1.2rem; margin-top: 0.2rem;">0w • 0c</div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.65rem; flex-shrink: 0;">
+                <button class="btn btn-primary" onclick="pasteFromClipboard()">Paste Clipboard</button>
+                <button class="btn btn-secondary" onclick="clearLiveEditor()">Clear</button>
+            </div>
+
+            <textarea id="live-textarea" class="live-textarea" placeholder="Paste or type text here... lines update in real time!" oninput="updateLiveStats()"></textarea>
+        </div>
+
+        <!-- TAB 3: Batch & Directory Scanner -->
+        <div id="tab-batch" class="tab-content">
+            <div class="batch-controls">
+                <input type="file" id="batch-files-input" multiple style="display:none;" onchange="handleBatchFilesPicked(this.files)">
+                <input type="file" id="batch-dir-input" webkitdirectory directory multiple style="display:none;" onchange="handleBatchDirectoryPicked(this.files)">
+
+                <button class="btn btn-primary" onclick="openBatchFilesNative()">
+                    📂 Choose Files...
+                </button>
+                <button class="btn btn-secondary" onclick="openFolderNative()">
+                    📁 Choose Folder (Recursive)...
+                </button>
+
+                <div style="flex: 1; display: flex; gap: 0.5rem; min-width: 280px;">
+                    <input type="text" id="dirpath-input" placeholder="e.g. C:\Projects\my-code or enter folder path..." style="flex:1; background:var(--bg-card); border:1px solid var(--border-subtle); color:var(--text-primary); font-family:var(--font-mono); font-size:0.85rem; padding:0.4rem 0.65rem; border-radius:8px; outline:none;" onkeydown="if(event.key==='Enter') scanPathFolder()">
+                    <button class="btn btn-secondary" onclick="scanPathFolder()">Scan Path</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap;">
+                <div class="search-input-box" style="flex: 1; max-width: 320px; padding: 0.35rem 0.65rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="batch-filter-input" placeholder="Filter files by name or extension..." oninput="onBatchFilterChange()" style="flex: 1; background: transparent; border: none; color: #fff; font-size: 0.8rem; outline: none;">
+                </div>
+                <div id="batch-ext-pills" style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;"></div>
+            </div>
+
+            <div class="batch-table-container">
+                <div class="batch-scroll">
+                    <table class="batch-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable" onclick="sortBatchTable('name')">File / Relative Path <span id="sort-name" class="sort-icon"></span></th>
+                                <th class="sortable" style="text-align: right;" onclick="sortBatchTable('total')">Total Lines <span id="sort-total" class="sort-icon"></span></th>
+                                <th class="sortable" style="text-align: right;" onclick="sortBatchTable('empty')">Empty Lines <span id="sort-empty" class="sort-icon"></span></th>
+                                <th class="sortable" style="text-align: right;" onclick="sortBatchTable('content')">Content Lines <span id="sort-content" class="sort-icon"></span></th>
+                                <th class="sortable" style="text-align: right;" onclick="sortBatchTable('size')">Size <span id="sort-size" class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="batch-tbody">
+                            <tr>
+                                <td colspan="5" style="text-align:center; padding: 3rem; color: var(--text-muted);">
+                                    Select files or a directory to start batch counting (all subdirectories included)
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="batch-footer">
+                    <span id="batch-summary-lbl" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Scanned 0 files</span>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-secondary" id="btn-export-batch-md" style="display:none;" onclick="exportBatchMarkdown()">📋 Copy Markdown</button>
+                        <button class="btn btn-secondary" id="btn-export-batch" style="display:none;" onclick="exportBatchCsv()">Download CSV</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: README, SHORTCUTS, ABOUT -->
+    <div class="modal-overlay" id="help-modal" onclick="if(event.target===this) toggleHelpModal()">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>📖 LineCounter Help & Shortcuts</h3>
+                <button style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.15rem;" onclick="toggleHelpModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-section">
+                    <h4>⌨️ Keyboard Shortcuts</h4>
+                    <div class="shortcuts-grid">
+                        <div class="shortcut-item">
+                            <span>Inspect path / Count</span>
+                            <kbd>Enter</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Browse Single File</span>
+                            <kbd>Ctrl + O</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Browse Folder</span>
+                            <kbd>Ctrl + Shift + O</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Toggle Line Wrap</span>
+                            <kbd>Ctrl + W</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Find in Preview</span>
+                            <kbd>Ctrl + F</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Next Empty Line</span>
+                            <kbd>Alt + E</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Prev Empty Line</span>
+                            <kbd>Alt + Shift + E</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Go to Line Number</span>
+                            <kbd>Ctrl + G</kbd>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Close Help / Modal</span>
+                            <kbd>Esc</kbd>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-section" style="border-top:1px solid var(--border-subtle); padding-top:0.75rem;">
+                    <h4>ℹ️ About LineCounter</h4>
+                    <p style="font-size:0.8rem; color:var(--text-muted);">
+                        Version 1.0.0 • Developed by Mortada (Dada) • High-performance code and line counter.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: FOLLOW & CONNECT -->
+    <div class="modal-overlay" id="connect-modal" onclick="if(event.target===this) toggleConnectModal()">
+        <div class="modal-box" style="max-width: 540px;">
+            <div class="modal-header">
+                <h3 style="display: flex; align-items: center; gap: 0.5rem;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg> Follow & Connect</h3>
+                <button style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.15rem;" onclick="toggleConnectModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.825rem; color: var(--text-secondary); margin: 0;">
+                    Thank you for using <strong>LineCounter 1.0</strong>! Explore the project repository, connect with the author, or support ongoing maintenance.
+                </p>
+
+                <div class="connect-list">
+                    <!-- GitHub -->
+                    <div class="connect-card interactive-hover-card connect-card-github">
+                        <div class="connect-info">
+                            <div class="connect-icon-box" style="background: rgba(255, 255, 255, 0.08); color: #ffffff;" onclick="openExternalUrl('https://github.com/amma-dada')" title="Open GitHub Profile (Click to open)">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="connect-title">GitHub</div>
+                                <div class="connect-desc">Source code, releases, stars & issue reports</div>
+                            </div>
+                        </div>
+                        <div class="connect-actions">
+                            <button class="btn btn-brand-github" onclick="openExternalUrl('https://github.com/amma-dada')">Visit ↗</button>
+                        </div>
+                    </div>
+
+                    <!-- LinkedIn -->
+                    <div class="connect-card interactive-hover-card connect-card-linkedin">
+                        <div class="connect-info">
+                            <div class="connect-icon-box" style="background: rgba(10, 102, 194, 0.15); color: #0a66c2;" onclick="openExternalUrl('https://www.linkedin.com/in/ahmed-mortada-zidane')" title="Open LinkedIn Profile (Click to open)">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="connect-title">LinkedIn</div>
+                                <div class="connect-desc">Connect with the creator & career updates</div>
+                            </div>
+                        </div>
+                        <div class="connect-actions">
+                            <button class="btn btn-brand-linkedin" onclick="openExternalUrl('https://www.linkedin.com/in/ahmed-mortada-zidane')">Connect ↗</button>
+                        </div>
+                    </div>
+
+                    <!-- Gmail Contact -->
+                    <div class="connect-card interactive-hover-card connect-card-gmail">
+                        <div class="connect-info">
+                            <div class="connect-icon-box" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);" onclick="openExternalUrl('https://mail.google.com/mail/?view=cm&fs=1&to=mortada6333@gmail.com')" title="Send Email via Gmail (Click to open)">
+                                <svg viewBox="0 49.4 512 399.42" width="22" height="18">
+                                    <path fill="#4285F4" d="M34.91 448.818h81.454V251L0 163.727V413.91c0 19.287 15.622 34.91 34.91 34.91z"/>
+                                    <path fill="#34A853" d="M395.636 448.818h81.455c19.287 0 34.909-15.622 34.909-34.909V163.727L395.636 251z"/>
+                                    <path fill="#FBBC05" d="M395.636 99.727V251L512 163.727v-46.545c0-43.142-49.25-67.782-83.782-41.891z"/>
+                                    <path fill="#EA4335" d="M116.364 251V99.727L256 204.455 395.636 99.727V251L256 355.727z"/>
+                                    <path fill="#C5221F" d="M0 117.182v46.545L116.364 251V99.727L83.782 75.291C49.25 49.4 0 74.04 0 117.18z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="connect-title">Gmail</div>
+                                <div class="connect-desc">Direct inquiries, feedback & questions</div>
+                            </div>
+                        </div>
+                        <div class="connect-actions">
+                            <button class="btn btn-brand-email" onclick="openExternalUrl('https://mail.google.com/mail/?view=cm&fs=1&to=mortada6333@gmail.com')">Gmail ↗</button>
+                        </div>
+                    </div>
+
+                    <!-- Ko-fi Support Card -->
+                    <div class="connect-card interactive-hover-card connect-card-kofi" id="support-connect-card">
+                        <div class="connect-info">
+                            <div class="connect-icon-box" onclick="openExternalUrl('https://ko-fi.com/dada0mortada')" title="Support on Ko-fi (ko-fi.com/dada0mortada)" style="background: rgba(255, 94, 91, 0.15); border: none !important;">
+                                <img src="data:image/png;base64,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" alt="Ko-fi" style="width: 22px; height: 22px; object-fit: contain; display: block;">
+                            </div>
+                            <div>
+                                <div class="connect-title">Ko-fi</div>
+                                <div class="connect-desc">Buy Me a Tea</div>
+                            </div>
+                        </div>
+                        <div class="connect-actions">
+                            <!-- Pink pill Support button with Heart -->
+                            <button class="btn btn-brand-kofi" onclick="openExternalUrl('https://ko-fi.com/dada0mortada')" title="Support on Ko-fi (ko-fi.com/dada0mortada)">
+                                <svg width="15" height="15" viewBox="0 0 24 24">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                </svg>
+                                Support
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span id="toast-msg">Copied!</span>
+    </div>
+
+    <script>
+        // Interactive dynamic gradient border on all connect cards
+        document.addEventListener('DOMContentLoaded', () => {
+        // Smooth zero-flicker window reveal: reveal window once dark DOM is painted
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
+                    window.__TAURI__.core.invoke('show_main_window').catch(() => {});
+                }
+            });
+        });
+
+            document.querySelectorAll('.interactive-hover-card').forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    card.style.setProperty('--mouse-x', x + 'px');
+                    card.style.setProperty('--mouse-y', y + 'px');
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rad = Math.atan2(y - centerY, x - centerX);
+                    const deg = (rad * (180 / Math.PI) + 90 + 360) % 360;
+                    card.style.setProperty('--card-angle', deg + 'deg');
+                });
+            });
+        });
+
+        let currentPath = null;
+        let currentFile = null;
+        let currentStats = null;
+        let activeLineFilter = 'all';
+        let searchQuery = '';
+        let isWrapped = false;
+        let batchResults = [];
+        let batchDisplayLimit = 300;
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-nav .tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            const targetIndex = ['drop', 'file', 'paste', 'batch'].indexOf(tabId);
+            if (targetIndex >= 0) {
+                document.querySelectorAll('.tab-nav .tab-btn')[targetIndex].classList.add('active');
+            }
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        function toggleHelpModal() {
+            document.getElementById('help-modal').classList.toggle('open');
+        }
+
+        function toggleConnectModal() {
+            document.getElementById('connect-modal').classList.toggle('open');
+        }
+
+        async function apiCall(endpoint, body) {
+            if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
+                const invoke = window.__TAURI__.core.invoke;
+                switch (endpoint) {
+                    case 'open-external-url':
+                        return await invoke('open_external_url', { url: body.url });
+                    case 'dialog/choose-file': {
+                        const path = await invoke('choose_file_dialog');
+                        return { path: path || null };
+                    }
+                    case 'dialog/choose-folder': {
+                        const path = await invoke('choose_folder_dialog');
+                        return { path: path || null };
+                    }
+                    case 'dialog/choose-files': {
+                        const paths = await invoke('choose_files_dialog');
+                        return { paths: paths || [] };
+                    }
+                    case 'count-path':
+                        return await invoke('count_path', {
+                            path: body.path,
+                            includeTrailingEmpty: body.include_trailing_empty,
+                            treatWhitespaceAsEmpty: body.treat_whitespace_as_empty
+                        });
+                    case 'count-text-content':
+                        return await invoke('count_text', {
+                            text: body.text,
+                            filename: body.filename,
+                            includeTrailingEmpty: body.include_trailing_empty,
+                            treatWhitespaceAsEmpty: body.treat_whitespace_as_empty
+                        });
+                    case 'scan-directory':
+                        return await invoke('scan_directory', {
+                            path: body.path,
+                            recursive: body.recursive,
+                            includeTrailingEmpty: body.include_trailing_empty,
+                            treatWhitespaceAsEmpty: body.treat_whitespace_as_empty
+                        });
+                    case 'batch-scan-paths':
+                        return await invoke('batch_scan_paths', {
+                            paths: body.paths,
+                            includeTrailingEmpty: body.include_trailing_empty,
+                            treatWhitespaceAsEmpty: body.treat_whitespace_as_empty
+                        });
+                    case 'inspect-path':
+                        return await invoke('inspect_path', { path: body.path });
+                    case 'save-file-content':
+                        return await invoke('save_file_content', { path: body.path, content: body.content });
+                    default:
+                        throw new Error('Unknown command: ' + endpoint);
+                }
+            } else {
+                const res = await fetch('/api/' + endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body ? JSON.stringify(body) : undefined
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({ error: 'Request failed' }));
+                    throw new Error(err.error || 'Request failed');
+                }
+                return await res.json();
+            }
+        }
+
+        function openExternalUrl(url) {
+            if (!url) return;
+            apiCall('open-external-url', { url: url }).catch(() => {
+                window.open(url, '_blank');
+            });
+        }
+
+        function returnToBatchScanner() {
+            switchTab('batch');
+        }
+
+        // Native File / Folder Choosers
+        // By using dialog/choose-files, GTK opens the native dialog with select_multiple=true
+        // allowing Shift+Click (range), Ctrl+Click (multi), and Ctrl+A (select all).
+        // If 1 file is picked, it loads in Single File inspector. If multiple, it loads in Batch Scanner!
+        function openFileNative() {
+            openBatchFilesNative();
+        }
+
+        function openFolderNative() {
+            apiCall('dialog/choose-folder')
+            .then(data => {
+                if (data && data.path) {
+                    document.getElementById('dirpath-input').value = data.path;
+                    scanPathFolder(data.path);
+                    switchTab('batch');
+                } else if (data && data.unsupported) {
+                    document.getElementById('batch-dir-input').click();
+                }
+            })
+            .catch(() => {
+                document.getElementById('batch-dir-input').click();
+            });
+        }
+
+        function openBatchFilesNative() {
+            apiCall('dialog/choose-files')
+            .then(data => {
+                if (data && data.paths && data.paths.length) {
+                    if (data.paths.length === 1) {
+                        const single = data.paths[0];
+                        document.getElementById('filepath-input').value = single;
+                        countFromPath(single);
+                        displayDropResultCard(single, 'file');
+                        switchTab('file');
+                    } else {
+                        processBatchPathsDirectly(data.paths);
+                        displayDropResultCard(`${data.paths.length} files selected`, 'batch_paths');
+                        switchTab('batch');
+                    }
+                } else if (data && data.unsupported) {
+                    document.getElementById('batch-files-input').click();
+                }
+            })
+            .catch(() => {
+                document.getElementById('batch-files-input').click();
+            });
+        }
+
+        function handleFilePicked(file) {
+            if (!file) return;
+            currentFile = file;
+            currentPath = null;
+            document.getElementById('filepath-input').value = file.name;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                analyzeTextContent(file.name, e.target.result, file.size);
+            };
+            reader.readAsText(file);
+        }
+
+        // ==================== NATIVE GTK 4 DROP BRIDGES ====================
+        window.handleNativeDroppedFile = function(filePath) {
+            document.getElementById('filepath-input').value = filePath;
+            countFromPath(filePath);
+            displayDropResultCard(filePath, 'file');
+        };
+
+        window.handleNativeDroppedDirectory = function(dirPath) {
+            document.getElementById('dirpath-input').value = dirPath;
+            scanPathFolder(dirPath);
+            displayDropResultCard(dirPath, 'directory');
+        };
+
+        window.handleNativeDroppedBatch = function(paths) {
+            switchTab('batch');
+            processBatchPathsDirectly(paths);
+        };
+
+        // ==================== HTML5 DRAG & DROP ====================
+        const heroDropzone = document.getElementById('hero-dropzone');
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            heroDropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                heroDropzone.classList.add('dragover');
+            }, false);
+
+            window.addEventListener(eventName, (e) => {
+                e.preventDefault();
+            }, false);
+        });
+
+        ['dragleave', 'dragend'].forEach(eventName => {
+            heroDropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                heroDropzone.classList.remove('dragover');
+            }, false);
+        });
+
+        heroDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            heroDropzone.classList.remove('dragover');
+
+            handleAnyDropEvent(e);
+        }, false);
+
+        window.addEventListener('drop', (e) => {
+            if (e.target.closest('#hero-dropzone')) return;
+            e.preventDefault();
+            handleAnyDropEvent(e);
+        }, false);
+
+        async function handleTauriDroppedPaths(paths) {
+            if (!paths || !paths.length) return;
+            if (paths.length === 1) {
+                const single = paths[0];
+                try {
+                    const kind = await apiCall('inspect-path', { path: single });
+                    if (kind === 'directory') {
+                        document.getElementById('dirpath-input').value = single;
+                        scanPathFolder(single);
+                        displayDropResultCard(single, 'directory');
+                        switchTab('batch');
+                        return;
+                    }
+                } catch (e) {}
+                document.getElementById('filepath-input').value = single;
+                countFromPath(single);
+                displayDropResultCard(single, 'file');
+                switchTab('file');
+            } else {
+                switchTab('batch');
+                processBatchPathsDirectly(paths);
+            }
+        }
+
+        function handleAnyDropEvent(e) {
+            // Check for file.path from desktop WebKit / Tauri
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                const fileList = Array.from(e.dataTransfer.files);
+                const filePaths = fileList.map(f => f.path).filter(p => Boolean(p));
+                if (filePaths.length === fileList.length && filePaths.length > 0) {
+                    handleTauriDroppedPaths(filePaths);
+                    return;
+                }
+            }
+
+            const uriList = e.dataTransfer ? e.dataTransfer.getData('text/uri-list') : null;
+            if (uriList) {
+                handleDroppedUriList(uriList, e);
+                return;
+            }
+
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                if (e.dataTransfer.files.length === 1) {
+                    handleFilePicked(e.dataTransfer.files[0]);
+                    displayDropResultCard(e.dataTransfer.files[0].name, 'file');
+                } else {
+                    switchTab('batch');
+                    handleBatchFilesPicked(e.dataTransfer.files);
+                }
+            }
+        }
+
+        function handleDroppedUriList(uriList, dropEvent) {
+            const lines = uriList.split('\n').map(l => l.trim()).filter(l => Boolean(l));
+            const parsedPaths = [];
+            for (const u of lines) {
+                if (u.startsWith('file://')) {
+                    try {
+                        const path = decodeURIComponent(new URL(u).pathname);
+                        if (path) parsedPaths.push(path);
+                    } catch (e) {
+                        parsedPaths.push(u.replace('file://', ''));
+                    }
+                } else if (u.startsWith('/') || /^[a-zA-Z]:\\/.test(u)) {
+                    parsedPaths.push(u);
+                }
+            }
+
+            if (parsedPaths.length > 0) {
+                handleTauriDroppedPaths(parsedPaths);
+                return;
+            }
+
+            fetch('/api/inspect-dropped-uris', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uris: uriList })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.action === 'file') {
+                    document.getElementById('filepath-input').value = data.path;
+                    countFromPath(data.path);
+                    displayDropResultCard(data.path, 'file');
+                } else if (data.action === 'directory') {
+                    document.getElementById('dirpath-input').value = data.path;
+                    scanPathFolder(data.path);
+                    displayDropResultCard(data.path, 'directory');
+                } else if (data.action === 'batch_paths') {
+                    switchTab('batch');
+                    processBatchPathsDirectly(data.paths);
+                }
+            })
+            .catch(err => {
+                if (dropEvent && dropEvent.dataTransfer && dropEvent.dataTransfer.files && dropEvent.dataTransfer.files.length) {
+                    handleFilePicked(dropEvent.dataTransfer.files[0]);
+                }
+            });
+        }
+
+        function displayDropResultCard(name, type) {
+            const card = document.getElementById('drop-results-card');
+            const title = document.getElementById('drop-result-title');
+            const stats = document.getElementById('drop-result-stats');
+            const btn = document.getElementById('drop-view-btn');
+
+            card.classList.add('show');
+            if (type === 'file') {
+                title.innerText = `📄 ${name.split('/').pop()}`;
+                stats.innerText = `Loaded and counted! Path: ${name}`;
+                btn.innerText = 'View in Inspector ➔';
+                btn.onclick = () => switchTab('file');
+            } else {
+                title.innerText = `📁 ${name.split('/').pop() || name}`;
+                stats.innerText = `Scanning directory and all subdirectories: ${name}`;
+                btn.innerText = 'View in Batch Table ➔';
+                btn.onclick = () => switchTab('batch');
+            }
+            showToast('Item successfully dropped!');
+        }
+
+        function countFromPathInput() {
+            const path = document.getElementById('filepath-input').value.trim();
+            if (!path) return;
+            countFromPath(path);
+        }
+
+        function countFromPath(path) {
+            currentPath = path;
+            currentFile = null;
+
+            apiCall('count-path', {
+                path: path,
+                include_trailing_empty: document.getElementById('opt-editor').checked,
+                treat_whitespace_as_empty: document.getElementById('opt-ws').checked
+            })
+            .then(data => {
+                if (data.error) {
+                    showToast('Error: ' + data.error);
+                } else {
+                    renderStats(data);
+                }
+            })
+            .catch(e => showToast('Failed: ' + e));
+        }
+
+        function recalculateCurrent() {
+            if (currentPath) {
+                countFromPath(currentPath);
+            } else if (currentFile) {
+                handleFilePicked(currentFile);
+            }
+        }
+
+        function formatBytesClientSide(bytes) {
+            if (!bytes || bytes <= 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + (sizes[i] || 'B');
+        }
+
+        function countTextContentClientSide(filename, text, sizeBytes) {
+            const treatWs = document.getElementById('opt-ws') ? document.getElementById('opt-ws').checked : true;
+            const editorMode = document.getElementById('opt-editor') ? document.getElementById('opt-editor').checked : false;
+
+            let isBinary = false;
+            for (let i = 0; i < Math.min(text.length, 1024); i++) {
+                if (text.charCodeAt(i) === 0) { isBinary = true; break; }
+            }
+
+            const rawLines = text.split(/\r\n|\r|\n/);
+            if (text.endsWith('\n') || text.endsWith('\r')) {
+                if (!editorMode && rawLines.length > 0 && rawLines[rawLines.length - 1] === '') {
+                    rawLines.pop();
+                }
+            }
+
+            let pureEmpty = 0;
+            let wsEmpty = 0;
+            let contentLines = 0;
+            const previewLines = [];
+            let maxLen = 0;
+            let maxLineNum = 1;
+            let totalWords = 0;
+
+            for (let i = 0; i < rawLines.length; i++) {
+                const line = rawLines[i];
+                const len = line.length;
+                if (len > maxLen) {
+                    maxLen = len;
+                    maxLineNum = i + 1;
+                }
+                const words = line.trim() ? line.trim().split(/\s+/).length : 0;
+                totalWords += words;
+
+                let ltype = 'content';
+                if (len === 0) {
+                    pureEmpty++;
+                    ltype = 'empty';
+                } else if (/^\s+$/.test(line)) {
+                    if (treatWs) {
+                        wsEmpty++;
+                        ltype = 'whitespace';
+                    } else {
+                        contentLines++;
+                        ltype = 'content';
+                    }
+                } else {
+                    contentLines++;
+                    ltype = 'content';
+                }
+
+                previewLines.push([i + 1, line, ltype]);
+            }
+
+            const totalEmpty = pureEmpty + wsEmpty;
+            return {
+                filename: filename,
+                total_lines: rawLines.length,
+                empty_lines: totalEmpty,
+                pure_empty_lines: pureEmpty,
+                whitespace_empty_lines: wsEmpty,
+                content_lines: contentLines,
+                file_size_bytes: sizeBytes || text.length,
+                file_size_formatted: formatBytesClientSide(sizeBytes || text.length),
+                word_count: totalWords,
+                char_count: text.length,
+                max_line_len: maxLen,
+                max_line_num: maxLineNum,
+                detected_newline: text.includes('\r\n') ? 'CRLF' : (text.includes('\r') ? 'CR' : 'LF'),
+                is_binary: isBinary,
+                preview_lines: previewLines
+            };
+        }
+
+        function analyzeTextContent(filename, text, sizeBytes) {
+            apiCall('count-text-content', {
+                filename: filename,
+                text: text,
+                size_bytes: sizeBytes,
+                include_trailing_empty: document.getElementById('opt-editor').checked,
+                treat_whitespace_as_empty: document.getElementById('opt-ws').checked
+            })
+            .then(renderStats)
+            .catch(() => {
+                const stats = countTextContentClientSide(filename, text, sizeBytes);
+                renderStats(stats);
+            });
+        }
+
+        function renderStats(stats) {
+            currentStats = stats;
+
+            document.getElementById('m-total').innerText = Number(stats.total_lines).toLocaleString();
+            document.getElementById('m-empty').innerText = Number(stats.empty_lines).toLocaleString();
+            document.getElementById('m-content').innerText = Number(stats.content_lines).toLocaleString();
+            document.getElementById('m-size').innerText = stats.file_size_formatted;
+
+            if (stats.is_binary) {
+                document.getElementById('m-ending').innerText = 'BINARY';
+                document.getElementById('m-ending').style.background = 'rgba(239, 68, 68, 0.2)';
+                document.getElementById('m-ending').style.color = '#ef4444';
+                document.getElementById('status-quick-info').innerHTML = `<span class="bin-badge">⚠️ BINARY FILE</span> ${stats.filename || 'File'} • ${stats.total_lines} lines (${stats.empty_lines} empty)`;
+            } else {
+                document.getElementById('m-ending').innerText = stats.detected_newline;
+                document.getElementById('m-ending').style.background = '';
+                document.getElementById('m-ending').style.color = '';
+                document.getElementById('status-quick-info').innerText = `${stats.filename || 'File'} • ${stats.total_lines} lines (${stats.empty_lines} empty)`;
+            }
+
+            document.getElementById('m-words').innerText = `${Number(stats.word_count).toLocaleString()} words • ${Number(stats.char_count).toLocaleString()} chars`;
+
+            const maxLen = stats.max_line_len || 0;
+            const maxLineNum = stats.max_line_num ? ` (#${stats.max_line_num})` : '';
+            const maxLenElem = document.getElementById('m-max-len');
+            if (maxLenElem) {
+                maxLenElem.innerText = `${maxLen.toLocaleString()} chars${maxLineNum}`;
+            }
+
+            const emptyPct = stats.empty_pct || (stats.total_lines > 0 ? ((stats.empty_lines / stats.total_lines) * 100).toFixed(1) : 0);
+            const contentPct = stats.content_pct || (stats.total_lines > 0 ? ((stats.content_lines / stats.total_lines) * 100).toFixed(1) : 0);
+
+            document.getElementById('m-empty-pct').innerText = `${emptyPct}%`;
+            document.getElementById('m-content-pct').innerText = `${contentPct}%`;
+            document.getElementById('m-empty-sub').innerText = `Pure: ${stats.pure_empty_lines} • Whitespace: ${stats.whitespace_only_lines}`;
+
+            document.getElementById('filter-all-btn').innerText = `All Lines (${stats.total_lines})`;
+            document.getElementById('filter-empty-btn').innerText = `Empty (${stats.empty_lines})`;
+            document.getElementById('filter-content-btn').innerText = `Content (${stats.content_lines})`;
+
+            const gotoInput = document.getElementById('goto-line-input');
+            if (gotoInput) {
+                gotoInput.value = '';
+                gotoInput.max = stats.total_lines;
+                gotoInput.placeholder = stats.total_lines > 0 ? `1-${stats.total_lines}` : 'Line #';
+            }
+
+            const dropStats = document.getElementById('drop-result-stats');
+            if (dropStats && currentPath) {
+                const binTxt = stats.is_binary ? ' • ⚠️ Binary File' : '';
+                dropStats.innerText = `${Number(stats.total_lines).toLocaleString()} total lines • ${Number(stats.empty_lines).toLocaleString()} empty${binTxt} • ${stats.file_size_formatted}`;
+            }
+
+            currentEmptyLineIndex = -1;
+            renderPreviewLines();
+
+            // Store snapshot for Editor mode
+            if (currentStats && currentStats.preview_lines) {
+                originalFileSnapshot = currentStats.preview_lines.map(p => p[1]).join(currentStats.detected_newline.includes('CRLF') ? '\r\n' : '\n');
+                const textarea = document.getElementById('editor-textarea');
+                if (textarea) {
+                    textarea.value = originalFileSnapshot;
+                    updateEditorGutter();
+                }
+            }
+        }
+
+        const RENDER_CHUNK = 250;
+        let renderedLineCount = 0;
+        let filteredLinesCache = [];
+        let searchDebounceTimer = null;
+
+        function onSearchInput() {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                searchQuery = (document.getElementById('viewer-search')?.value || '').toLowerCase().trim();
+                renderPreviewLines();
+            }, 120);
+        }
+
+        function setLineFilter(filterType, btn) {
+            activeLineFilter = filterType;
+            document.querySelectorAll('.filter-pills .pill-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentEmptyLineIndex = -1;
+            renderPreviewLines();
+        }
+
+        function toggleLineWrap() {
+            isWrapped = !isWrapped;
+            const container = document.getElementById('preview-lines');
+            const btn = document.getElementById('btn-wrap-lines');
+            if (isWrapped) {
+                container.classList.add('wrap-lines');
+                btn.classList.add('active');
+            } else {
+                container.classList.remove('wrap-lines');
+                btn.classList.remove('active');
+            }
+        }
+
+        function buildLineRowHtml(item) {
+            const [idx, content, type] = item;
+            const isEmpty = (type === 'empty' || type === 'whitespace');
+            const emptyClass = isEmpty ? ' line-is-empty' : '';
+            let contentHtml = '';
+
+            if (type === 'empty') {
+                contentHtml = '<span class="empty-tag">↵ [empty line]</span>';
+            } else if (type === 'whitespace') {
+                contentHtml = `${escapeHtml(content)} <span class="whitespace-tag">· [whitespace only]</span>`;
+            } else {
+                const query = searchQuery || (findWidgetTerm ? findWidgetTerm.toLowerCase() : '');
+                if (query && content.toLowerCase().includes(query)) {
+                    const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+                    contentHtml = escapeHtml(content).replace(regex, '<span class="highlight-match">$1</span>');
+                } else {
+                    contentHtml = escapeHtml(content);
+                }
+            }
+
+            return `<div class="code-line${emptyClass}" id="line-row-${idx}" data-line="${idx}"><span class="line-num">${idx}</span><span class="line-content">${contentHtml}</span></div>`;
+        }
+
+        function renderPreviewLines() {
+            const container = document.getElementById('preview-lines');
+            if (!container) return;
+
+            if (!currentStats || !currentStats.preview_lines || !currentStats.preview_lines.length) {
+                container.innerHTML = '<div style="padding: 2.5rem; text-align: center; color: var(--text-muted);">Empty file (0 lines)</div>';
+                const sc = document.getElementById('search-count');
+                if (sc) sc.innerText = '';
+                renderedLineCount = 0;
+                filteredLinesCache = [];
+                return;
+            }
+
+            const totalLines = currentStats.preview_lines.length;
+            filteredLinesCache = [];
+            let matchCount = 0;
+            const query = searchQuery || '';
+
+            for (let i = 0; i < totalLines; i++) {
+                const item = currentStats.preview_lines[i];
+                const [, content, type] = item;
+                const isEmpty = (type === 'empty' || type === 'whitespace');
+                if (activeLineFilter === 'empty' && !isEmpty) continue;
+                if (activeLineFilter === 'content' && isEmpty) continue;
+
+                if (query) {
+                    if (content.toLowerCase().includes(query)) {
+                        matchCount++;
+                        filteredLinesCache.push(item);
+                    }
+                } else {
+                    filteredLinesCache.push(item);
+                }
+            }
+
+            const sc = document.getElementById('search-count');
+            if (sc) sc.innerText = query ? `${matchCount} match${matchCount === 1 ? '' : 'es'}` : '';
+
+            if (filteredLinesCache.length === 0) {
+                container.innerHTML = '<div style="padding: 2.5rem; text-align: center; color: var(--text-muted);">No lines matching filter in displayed range</div>';
+                renderedLineCount = 0;
+                return;
+            }
+
+            const initialSlice = Math.min(RENDER_CHUNK, filteredLinesCache.length);
+            const htmlArr = [];
+            for (let i = 0; i < initialSlice; i++) {
+                htmlArr.push(buildLineRowHtml(filteredLinesCache[i]));
+            }
+
+            if (filteredLinesCache.length > initialSlice) {
+                htmlArr.push(`
+                    <div id="preview-scroll-sentinel" style="padding: 0.85rem; text-align: center; background: rgba(30, 41, 59, 0.4); border-top: 1px dashed var(--border-subtle); display: flex; align-items: center; justify-content: center; gap: 0.75rem;">
+                        <span style="font-size: 0.8rem; color: var(--text-secondary);">Showing 1 - ${initialSlice.toLocaleString()} of ${filteredLinesCache.length.toLocaleString()} lines (Scroll down to stream more)</span>
+                        <button class="btn btn-secondary" onclick="appendNextLinesChunk(500)" style="font-size: 0.75rem; padding: 0.2rem 0.6rem;">+ Load Next 500</button>
+                    </div>
+                `);
+            }
+
+            container.innerHTML = htmlArr.join('');
+            renderedLineCount = initialSlice;
+            setupSentinelObserver();
+        }
+
+        function appendNextLinesChunk(count = 500) {
+            const container = document.getElementById('preview-lines');
+            if (!container || renderedLineCount >= filteredLinesCache.length) return;
+
+            const sentinel = document.getElementById('preview-scroll-sentinel');
+            if (sentinel) sentinel.remove();
+
+            const nextLimit = Math.min(renderedLineCount + count, filteredLinesCache.length);
+            const htmlArr = [];
+            for (let i = renderedLineCount; i < nextLimit; i++) {
+                htmlArr.push(buildLineRowHtml(filteredLinesCache[i]));
+            }
+            renderedLineCount = nextLimit;
+
+            if (renderedLineCount < filteredLinesCache.length) {
+                htmlArr.push(`
+                    <div id="preview-scroll-sentinel" style="padding: 0.85rem; text-align: center; background: rgba(30, 41, 59, 0.4); border-top: 1px dashed var(--border-subtle); display: flex; align-items: center; justify-content: center; gap: 0.75rem;">
+                        <span style="font-size: 0.8rem; color: var(--text-secondary);">Showing 1 - ${renderedLineCount.toLocaleString()} of ${filteredLinesCache.length.toLocaleString()} lines (Scroll down to stream more)</span>
+                        <button class="btn btn-secondary" onclick="appendNextLinesChunk(500)" style="font-size: 0.75rem; padding: 0.2rem 0.6rem;">+ Load Next 500</button>
+                    </div>
+                `);
+            }
+
+            container.insertAdjacentHTML('beforeend', htmlArr.join(''));
+            setupSentinelObserver();
+        }
+
+        let sentinelObserver = null;
+        function setupSentinelObserver() {
+            if (sentinelObserver) {
+                sentinelObserver.disconnect();
+                sentinelObserver = null;
+            }
+            const sentinel = document.getElementById('preview-scroll-sentinel');
+            const container = document.getElementById('preview-lines');
+            if (!sentinel || !container) return;
+
+            sentinelObserver = new IntersectionObserver((entries) => {
+                if (entries[0] && entries[0].isIntersecting) {
+                    appendNextLinesChunk(500);
+                }
+            }, {
+                root: container,
+                rootMargin: '300px'
+            });
+            sentinelObserver.observe(sentinel);
+        }
+
+        // Single File Editor Mode Logic
+        let isEditorMode = false;
+        let isFileDirty = false;
+        let originalFileSnapshot = '';
+        let editorDebounceTimer = null;
+
+        function toggleEditorMode() {
+            if (!currentStats) {
+                showToast('Please open or drop a file first');
+                return;
+            }
+            isEditorMode = !isEditorMode;
+            const viewContainer = document.getElementById('preview-lines');
+            const editorContainer = document.getElementById('editor-container');
+            const toggleBtn = document.getElementById('btn-toggle-editor');
+            const editLbl = document.getElementById('edit-mode-lbl');
+            const editIcon = document.getElementById('edit-mode-icon');
+            const saveBtn = document.getElementById('btn-save-file');
+            const revertBtn = document.getElementById('btn-revert-file');
+
+            if (isEditorMode) {
+                viewContainer.style.display = 'none';
+                editorContainer.style.display = 'flex';
+                toggleBtn.classList.add('active');
+                if (editLbl) editLbl.innerText = 'View';
+                if (editIcon) editIcon.innerText = '👁️';
+
+                const textarea = document.getElementById('editor-textarea');
+                if (!originalFileSnapshot && currentStats && currentStats.preview_lines) {
+                    originalFileSnapshot = currentStats.preview_lines.map(p => p[1]).join(currentStats.detected_newline.includes('CRLF') ? '\r\n' : '\n');
+                    textarea.value = originalFileSnapshot;
+                }
+                updateEditorGutter();
+                if (isFileDirty) {
+                    if (saveBtn) saveBtn.style.display = 'inline-flex';
+                    if (revertBtn) revertBtn.style.display = 'inline-flex';
+                }
+                textarea.focus();
+            } else {
+                viewContainer.style.display = 'block';
+                editorContainer.style.display = 'none';
+                toggleBtn.classList.remove('active');
+                if (editLbl) editLbl.innerText = 'Edit';
+                if (editIcon) editIcon.innerText = '✏️';
+
+                if (isFileDirty) {
+                    const val = document.getElementById('editor-textarea').value;
+                    const updatedStats = countTextContentClientSide(currentStats.filename || 'Edited File', val, val.length);
+                    updatedStats.abs_path = currentStats.abs_path;
+                    updatedStats.path = currentStats.path;
+                    currentStats = updatedStats;
+                    renderPreviewLines();
+                }
+            }
+        }
+
+        function updateEditorGutter() {
+            const textarea = document.getElementById('editor-textarea');
+            const gutter = document.getElementById('editor-gutter');
+            if (!textarea || !gutter) return;
+
+            const lineCount = (textarea.value.match(/\n/g) || []).length + 1;
+            let numbers = '';
+            for (let i = 1; i <= lineCount; i++) {
+                numbers += i + '\n';
+            }
+            gutter.textContent = numbers;
+        }
+
+        function syncEditorScroll() {
+            const textarea = document.getElementById('editor-textarea');
+            const gutter = document.getElementById('editor-gutter');
+            if (textarea && gutter) {
+                gutter.scrollTop = textarea.scrollTop;
+            }
+        }
+
+        function onEditorInput() {
+            isFileDirty = true;
+            const saveBtn = document.getElementById('btn-save-file');
+            const revertBtn = document.getElementById('btn-revert-file');
+            if (saveBtn) saveBtn.style.display = 'inline-flex';
+            if (revertBtn) revertBtn.style.display = 'inline-flex';
+
+            updateEditorGutter();
+
+            clearTimeout(editorDebounceTimer);
+            editorDebounceTimer = setTimeout(() => {
+                const val = document.getElementById('editor-textarea').value;
+                const s = countTextContentClientSide(currentStats ? currentStats.filename : 'File', val, val.length);
+                document.getElementById('m-total').innerText = Number(s.total_lines).toLocaleString();
+                document.getElementById('m-empty').innerText = Number(s.empty_lines).toLocaleString();
+                document.getElementById('m-content').innerText = Number(s.content_lines).toLocaleString();
+                document.getElementById('m-size').innerText = s.file_size_formatted;
+                document.getElementById('m-words').innerText = `${Number(s.word_count).toLocaleString()} words • ${Number(s.char_count).toLocaleString()} chars`;
+                document.getElementById('m-empty-pct').innerText = `${s.empty_pct}%`;
+                document.getElementById('m-content-pct').innerText = `${s.content_pct}%`;
+                document.getElementById('m-empty-sub').innerText = `Pure: ${s.pure_empty_lines} • Whitespace: ${s.whitespace_only_lines}`;
+            }, 100);
+        }
+
+        function saveCurrentFile() {
+            const textarea = document.getElementById('editor-textarea');
+            if (!textarea) return;
+            const content = textarea.value;
+
+            if (currentPath) {
+                apiCall('save-file-content', { path: currentPath, content: content })
+                    .then(() => {
+                        originalFileSnapshot = content;
+                        isFileDirty = false;
+                        const saveBtn = document.getElementById('btn-save-file');
+                        const revertBtn = document.getElementById('btn-revert-file');
+                        if (saveBtn) saveBtn.style.display = 'none';
+                        if (revertBtn) revertBtn.style.display = 'none';
+                        showToast('File saved successfully!');
+                        countFromPath(currentPath);
+                    })
+                    .catch(err => {
+                        showToast('Save failed: ' + err);
+                    });
+            } else {
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = (currentStats && currentStats.filename) ? currentStats.filename : 'linecounter_file.txt';
+                a.click();
+                URL.revokeObjectURL(url);
+                originalFileSnapshot = content;
+                isFileDirty = false;
+                const saveBtn = document.getElementById('btn-save-file');
+                const revertBtn = document.getElementById('btn-revert-file');
+                if (saveBtn) saveBtn.style.display = 'none';
+                if (revertBtn) revertBtn.style.display = 'none';
+                showToast('File exported and saved!');
+            }
+        }
+
+        function revertCurrentFile() {
+            const textarea = document.getElementById('editor-textarea');
+            if (!textarea) return;
+            textarea.value = originalFileSnapshot;
+            isFileDirty = false;
+            updateEditorGutter();
+            const saveBtn = document.getElementById('btn-save-file');
+            const revertBtn = document.getElementById('btn-revert-file');
+            if (saveBtn) saveBtn.style.display = 'none';
+            if (revertBtn) revertBtn.style.display = 'none';
+            if (currentPath) {
+                countFromPath(currentPath);
+            }
+            showToast('Reverted all changes to original');
+        }
+
+        // Floating Find & Replace Widget Logic (Matches Reference Image)
+        let findMatches = [];
+        let currentFindIndex = -1;
+        let findWidgetTerm = '';
+
+        function openFindWidget(withReplace = false) {
+            const card = document.getElementById('find-replace-card');
+            const replaceRow = document.getElementById('find-row-replace');
+            const toggleBtn = document.getElementById('find-widget-toggle-replace');
+            if (!card) return;
+
+            card.style.display = 'block';
+            if (withReplace) {
+                replaceRow.style.display = 'flex';
+                if (toggleBtn) toggleBtn.classList.add('active');
+            }
+
+            const inp = document.getElementById('find-widget-input');
+            if (inp) {
+                inp.focus();
+                inp.select();
+                onFindWidgetInput();
+            }
+        }
+
+        function closeFindWidget() {
+            const card = document.getElementById('find-replace-card');
+            if (card) card.style.display = 'none';
+            findWidgetTerm = '';
+            findMatches = [];
+            currentFindIndex = -1;
+            renderPreviewLines();
+        }
+
+        function toggleReplaceRow() {
+            const row = document.getElementById('find-row-replace');
+            const btn = document.getElementById('find-widget-toggle-replace');
+            if (!row) return;
+            const isVisible = (row.style.display !== 'none');
+            row.style.display = isVisible ? 'none' : 'flex';
+            if (btn) {
+                if (!isVisible) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
+            if (!isVisible) {
+                document.getElementById('replace-widget-input')?.focus();
+            }
+        }
+
+        function onFindWidgetInput() {
+            const val = (document.getElementById('find-widget-input')?.value || '').trim();
+            findWidgetTerm = val;
+            findMatches = [];
+            currentFindIndex = -1;
+
+            if (!val) {
+                document.getElementById('find-widget-count').innerText = '0 of 0';
+                return;
+            }
+
+            if (isEditorMode) {
+                const textarea = document.getElementById('editor-textarea');
+                if (!textarea) return;
+                const text = textarea.value.toLowerCase();
+                const search = val.toLowerCase();
+                let pos = text.indexOf(search);
+                while (pos !== -1) {
+                    findMatches.push({ start: pos, end: pos + search.length });
+                    pos = text.indexOf(search, pos + 1);
+                }
+            } else {
+                if (currentStats && currentStats.preview_lines) {
+                    const search = val.toLowerCase();
+                    for (let i = 0; i < currentStats.preview_lines.length; i++) {
+                        const item = currentStats.preview_lines[i];
+                        if (item[1].toLowerCase().includes(search)) {
+                            findMatches.push({ lineNum: item[0], lineIndex: i });
+                        }
+                    }
+                }
+            }
+
+            const countLbl = document.getElementById('find-widget-count');
+            if (findMatches.length > 0) {
+                currentFindIndex = 0;
+                countLbl.innerText = `1 of ${findMatches.length}`;
+                highlightCurrentFindMatch();
+            } else {
+                countLbl.innerText = '0 of 0';
+            }
+        }
+
+        function findNavigate(direction) {
+            if (!findMatches.length) return;
+            if (direction === 1) {
+                currentFindIndex = (currentFindIndex + 1) % findMatches.length;
+            } else {
+                currentFindIndex = (currentFindIndex - 1 + findMatches.length) % findMatches.length;
+            }
+            document.getElementById('find-widget-count').innerText = `${currentFindIndex + 1} of ${findMatches.length}`;
+            highlightCurrentFindMatch();
+        }
+
+        function highlightCurrentFindMatch() {
+            if (currentFindIndex < 0 || currentFindIndex >= findMatches.length) return;
+            const match = findMatches[currentFindIndex];
+
+            if (isEditorMode) {
+                const textarea = document.getElementById('editor-textarea');
+                if (!textarea) return;
+                textarea.focus();
+                textarea.setSelectionRange(match.start, match.end);
+                const fullText = textarea.value;
+                const linesBefore = (fullText.substring(0, match.start).match(/\n/g) || []).length;
+                const lineHeight = 21;
+                textarea.scrollTop = Math.max(0, linesBefore * lineHeight - 100);
+            } else {
+                goToLine(match.lineNum);
+            }
+        }
+
+        function handleFindKeydown(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                findNavigate(e.shiftKey ? -1 : 1);
+            } else if (e.key === 'Escape') {
+                closeFindWidget();
+            }
+        }
+
+        function executeReplaceOne() {
+            const repVal = document.getElementById('replace-widget-input')?.value || '';
+            if (!findWidgetTerm) return;
+
+            if (!isEditorMode) {
+                toggleEditorMode();
+            }
+
+            const textarea = document.getElementById('editor-textarea');
+            if (!textarea) return;
+
+            if (currentFindIndex >= 0 && currentFindIndex < findMatches.length) {
+                const m = findMatches[currentFindIndex];
+                const before = textarea.value.substring(0, m.start);
+                const after = textarea.value.substring(m.end);
+                textarea.value = before + repVal + after;
+                onEditorInput();
+                onFindWidgetInput();
+            } else {
+                onFindWidgetInput();
+                if (findMatches.length) {
+                    executeReplaceOne();
+                }
+            }
+        }
+
+        function executeReplaceAll() {
+            const repVal = document.getElementById('replace-widget-input')?.value || '';
+            if (!findWidgetTerm) return;
+
+            if (!isEditorMode) {
+                toggleEditorMode();
+            }
+
+            const textarea = document.getElementById('editor-textarea');
+            if (!textarea) return;
+
+            const regex = new RegExp(escapeRegex(findWidgetTerm), 'g');
+            const matchesCount = (textarea.value.match(regex) || []).length;
+            if (matchesCount === 0) {
+                showToast('No matches found to replace');
+                return;
+            }
+
+            textarea.value = textarea.value.replace(regex, repVal);
+            onEditorInput();
+            onFindWidgetInput();
+            showToast(`Replaced ${matchesCount} occurrence${matchesCount === 1 ? '' : 's'}!`);
+        }
+
+        let currentEmptyLineIndex = -1;
+
+        function jumpToEmptyLine(direction = 1) {
+            const emptyLines = Array.from(document.querySelectorAll('.code-line.line-is-empty'));
+            if (!emptyLines.length) {
+                showToast('No empty lines found in current view');
+                return;
+            }
+
+            if (direction === 1) {
+                currentEmptyLineIndex = (currentEmptyLineIndex + 1) % emptyLines.length;
+            } else {
+                currentEmptyLineIndex = (currentEmptyLineIndex - 1 + emptyLines.length) % emptyLines.length;
+            }
+
+            const target = emptyLines[currentEmptyLineIndex];
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.classList.remove('flash-empty-highlight');
+            void target.offsetWidth;
+            target.classList.add('flash-empty-highlight');
+
+            const lineNum = target.querySelector('.line-num')?.innerText || (currentEmptyLineIndex + 1);
+            showToast(`Empty line ${currentEmptyLineIndex + 1} of ${emptyLines.length} (Line #${lineNum})`);
+        }
+
+        function copyCleanedContent() {
+            if (!currentStats || !currentStats.preview_lines || !currentStats.preview_lines.length) {
+                showToast('No content to clean');
+                return;
+            }
+            const contentOnly = currentStats.preview_lines
+                .filter(([idx, text, type]) => type === 'content')
+                .map(([idx, text]) => text)
+                .join('\n');
+
+            navigator.clipboard.writeText(contentOnly).then(() => {
+                const stripped = (currentStats.empty_lines || 0);
+                showToast(`Copied text with ${stripped.toLocaleString()} empty lines stripped!`);
+            }).catch(() => showToast('Could not copy to clipboard'));
+        }
+
+        function jumpToLongestLine() {
+            if (!currentStats) return;
+            const lineNum = currentStats.max_line_num;
+            if (!lineNum) {
+                showToast('No line data available');
+                return;
+            }
+            goToLine(lineNum);
+            showToast(`Jumped to longest line (#${lineNum}): ${currentStats.max_line_len.toLocaleString()} chars`);
+        }
+
+        function focusGoToInput() {
+            switchTab('file');
+            const inp = document.getElementById('goto-line-input');
+            if (inp) {
+                inp.focus();
+                inp.select();
+            }
+        }
+
+        function executeGoToLine() {
+            if (!currentStats || !currentStats.total_lines) {
+                showToast('No file currently loaded');
+                return;
+            }
+            const inp = document.getElementById('goto-line-input');
+            const val = inp ? inp.value.trim() : '';
+            if (!val) {
+                if (inp) inp.focus();
+                showToast(`Type a line number (1 - ${currentStats.total_lines.toLocaleString()})`);
+                return;
+            }
+            const num = parseInt(val, 10);
+            if (isNaN(num) || num < 1 || num > currentStats.total_lines) {
+                showToast(`Line must be between 1 and ${currentStats.total_lines.toLocaleString()}`);
+                if (inp) inp.select();
+                return;
+            }
+            goToLine(num);
+        }
+
+        function goToLine(lineNum) {
+            if (activeLineFilter !== 'all') {
+                const allBtn = document.getElementById('filter-all-btn');
+                if (allBtn) setLineFilter('all', allBtn);
+            }
+
+            const inp = document.getElementById('goto-line-input');
+            if (inp && String(inp.value).trim() !== String(lineNum)) {
+                inp.value = lineNum;
+            }
+
+            let target = document.getElementById('line-row-' + lineNum);
+            if (!target && filteredLinesCache.length > 0) {
+                const idx = filteredLinesCache.findIndex(item => item[0] === lineNum);
+                if (idx !== -1 && idx >= renderedLineCount) {
+                    appendNextLinesChunk((idx + 50) - renderedLineCount);
+                    target = document.getElementById('line-row-' + lineNum);
+                }
+            }
+
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                target.classList.remove('flash-empty-highlight');
+                void target.offsetWidth;
+                target.classList.add('flash-empty-highlight');
+                showToast(`Jumped to line #${lineNum}`);
+            } else {
+                showToast(`Line #${lineNum} not found in current view`);
+            }
+        }
+
+        // Live Paste
+        function updateLiveStats() {
+            const text = document.getElementById('live-textarea').value;
+            const treatWs = document.getElementById('opt-ws') ? document.getElementById('opt-ws').checked : true;
+            const editorMode = document.getElementById('opt-editor') ? document.getElementById('opt-editor').checked : false;
+
+            const lines = text.length === 0 ? [] : text.split(/\r\n|\r|\n/);
+            if (!editorMode && (text.endsWith('\n') || text.endsWith('\r')) && lines.length > 0 && lines[lines.length - 1] === '') {
+                lines.pop();
+            }
+
+            let empty = 0;
+            let words = 0;
+            for (let i = 0; i < lines.length; i++) {
+                const l = lines[i];
+                if (l.length === 0 || (treatWs && /^\s+$/.test(l))) {
+                    empty++;
+                }
+                if (l.trim()) {
+                    words += l.trim().split(/\s+/).length;
+                }
+            }
+
+            const total = lines.length;
+            const content = total - empty;
+
+            document.getElementById('p-total').innerText = Number(total).toLocaleString();
+            document.getElementById('p-empty').innerText = Number(empty).toLocaleString();
+            document.getElementById('p-content').innerText = Number(content).toLocaleString();
+            document.getElementById('p-words').innerText = `${Number(words).toLocaleString()}w • ${Number(text.length).toLocaleString()}c`;
+        }
+
+        function pasteFromClipboard() {
+            navigator.clipboard.readText().then(txt => {
+                document.getElementById('live-textarea').value = txt;
+                updateLiveStats();
+            }).catch(() => showToast('Could not access clipboard'));
+        }
+
+        function clearLiveEditor() {
+            document.getElementById('live-textarea').value = '';
+            updateLiveStats();
+        }
+
+        // Batch & Directory Scanner
+        function handleBatchFilesPicked(files) {
+            processBatchFilesList(Array.from(files));
+        }
+
+        function handleBatchDirectoryPicked(files) {
+            processBatchFilesList(Array.from(files));
+        }
+
+        function processBatchFilesList(files) {
+            if (!files.length) return;
+            switchTab('batch');
+            const tbody = document.getElementById('batch-tbody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--text-secondary);">Processing files...</td></tr>';
+            batchResults = [];
+            let processed = 0;
+
+            files.forEach(file => {
+                const displayName = file.webkitRelativePath || file.name;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const data = countTextContentClientSide(displayName, e.target.result, file.size);
+                    data.rel_path = displayName;
+                    batchResults.push(data);
+                    processed++;
+                    if (processed === files.length) {
+                        buildExtPills(batchResults);
+                        renderFilteredBatchTable();
+                        document.getElementById('btn-export-batch').style.display = 'inline-flex';
+                        const btnMd = document.getElementById('btn-export-batch-md');
+                        if (btnMd) btnMd.style.display = 'inline-flex';
+                        showToast(`Processed ${batchResults.length} files!`);
+                    }
+                };
+                reader.onerror = function() {
+                    processed++;
+                    if (processed === files.length) {
+                        renderFilteredBatchTable();
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        function processBatchPathsDirectly(paths) {
+            apiCall('batch-scan-paths', {
+                paths: paths,
+                include_trailing_empty: document.getElementById('opt-editor').checked,
+                treat_whitespace_as_empty: document.getElementById('opt-ws').checked
+            })
+            .then(renderBatchResults)
+            .catch(e => showToast('Batch scan failed: ' + e));
+        }
+
+        function scanPathFolder(folderPathOverride) {
+            const folderPath = folderPathOverride || document.getElementById('dirpath-input').value.trim();
+            if (!folderPath) return;
+
+            const tbody = document.getElementById('batch-tbody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:2.5rem; color:var(--text-secondary);">Scanning directory and all subdirectories...</td></tr>';
+            batchResults = [];
+
+            apiCall('scan-directory', {
+                path: folderPath,
+                recursive: document.getElementById('opt-recursive').checked,
+                include_trailing_empty: document.getElementById('opt-editor').checked,
+                treat_whitespace_as_empty: document.getElementById('opt-ws').checked
+            })
+            .then(data => {
+                if (data.error) {
+                    showToast('Scan Error: ' + data.error);
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#f87171; padding:2rem;">Error: ${escapeHtml(data.error)}</td></tr>`;
+                    return;
+                }
+                renderBatchResults(data);
+                const fileCount = Array.isArray(data) ? data.length : (data.total_files ?? (data.files ? data.files.length : 0));
+                showToast(`Scanned ${Number(fileCount).toLocaleString()} files across all folders!`);
+            })
+            .catch(e => showToast('Folder scan failed: ' + e));
+        }
+
+        let currentSortColumn = null;
+        let currentSortAsc = true;
+        let activeExtFilter = null;
+        let batchSearchQuery = '';
+
+        function onBatchFilterChange() {
+            batchSearchQuery = (document.getElementById('batch-filter-input')?.value || '').toLowerCase().trim();
+            batchDisplayLimit = 300;
+            renderFilteredBatchTable();
+        }
+
+        function setExtFilter(ext) {
+            if (activeExtFilter === ext) {
+                activeExtFilter = null;
+            } else {
+                activeExtFilter = ext;
+            }
+            batchDisplayLimit = 300;
+            updateExtPillsUI();
+            renderFilteredBatchTable();
+        }
+
+        function updateExtPillsUI() {
+            const pills = document.querySelectorAll('#batch-ext-pills .ext-pill');
+            pills.forEach(p => {
+                if (!activeExtFilter && p.dataset.ext === 'all') {
+                    p.classList.add('active');
+                } else if (p.dataset.ext === activeExtFilter) {
+                    p.classList.add('active');
+                } else {
+                    p.classList.remove('active');
+                }
+            });
+        }
+
+        function buildExtPills(files) {
+            const container = document.getElementById('batch-ext-pills');
+            if (!container) return;
+            container.innerHTML = '';
+            if (!files || !files.length) return;
+
+            const counts = {};
+            files.forEach(f => {
+                const name = f.rel_path || f.name || f.filename || '';
+                const dotIdx = name.lastIndexOf('.');
+                const ext = dotIdx !== -1 ? name.substring(dotIdx).toLowerCase() : 'no ext';
+                counts[ext] = (counts[ext] || 0) + 1;
+            });
+
+            const sortedExts = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+            if (sortedExts.length <= 1) return;
+
+            const allPill = document.createElement('button');
+            allPill.className = 'ext-pill' + (!activeExtFilter ? ' active' : '');
+            allPill.dataset.ext = 'all';
+            allPill.innerText = `All (${files.length})`;
+            allPill.onclick = () => setExtFilter(null);
+            container.appendChild(allPill);
+
+            sortedExts.slice(0, 10).forEach(ext => {
+                const pill = document.createElement('button');
+                pill.className = 'ext-pill' + (activeExtFilter === ext ? ' active' : '');
+                pill.dataset.ext = ext;
+                pill.innerText = `${ext} (${counts[ext]})`;
+                pill.onclick = () => setExtFilter(ext);
+                container.appendChild(pill);
+            });
+        }
+
+        function sortBatchTable(column) {
+            if (currentSortColumn === column) {
+                currentSortAsc = !currentSortAsc;
+            } else {
+                currentSortColumn = column;
+                currentSortAsc = (column === 'name');
+            }
+            updateSortIcons();
+            batchDisplayLimit = 300;
+            renderFilteredBatchTable();
+        }
+
+        function updateSortIcons() {
+            ['name', 'total', 'empty', 'content', 'size'].forEach(col => {
+                const icon = document.getElementById('sort-' + col);
+                if (!icon) return;
+                if (currentSortColumn === col) {
+                    icon.innerText = currentSortAsc ? ' ▲' : ' ▼';
+                } else {
+                    icon.innerText = '';
+                }
+            });
+        }
+
+        function renderFilteredBatchTable() {
+            const tbody = document.getElementById('batch-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            let filtered = batchResults.slice();
+            if (activeExtFilter) {
+                filtered = filtered.filter(f => {
+                    const name = (f.rel_path || f.name || f.filename || '').toLowerCase();
+                    return activeExtFilter === 'no ext' ? !name.includes('.') : name.endsWith(activeExtFilter);
+                });
+            }
+
+            if (batchSearchQuery) {
+                filtered = filtered.filter(f => {
+                    const name = (f.rel_path || f.name || f.filename || '').toLowerCase();
+                    return name.includes(batchSearchQuery);
+                });
+            }
+
+            if (currentSortColumn) {
+                filtered.sort((a, b) => {
+                    let valA, valB;
+                    if (currentSortColumn === 'name') {
+                        valA = (a.rel_path || a.name || a.filename || '').toLowerCase();
+                        valB = (b.rel_path || b.name || b.filename || '').toLowerCase();
+                        return currentSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    } else if (currentSortColumn === 'total') {
+                        valA = a.total_lines || 0;
+                        valB = b.total_lines || 0;
+                    } else if (currentSortColumn === 'empty') {
+                        valA = a.empty_lines || 0;
+                        valB = b.empty_lines || 0;
+                    } else if (currentSortColumn === 'content') {
+                        valA = a.content_lines || 0;
+                        valB = b.content_lines || 0;
+                    } else if (currentSortColumn === 'size') {
+                        valA = a.file_size_bytes || 0;
+                        valB = b.file_size_bytes || 0;
+                    }
+                    return currentSortAsc ? (valA - valB) : (valB - valA);
+                });
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:3rem; color:var(--text-muted);">No files match current filter</td></tr>';
+                document.getElementById('batch-summary-lbl').innerText = `Showing 0 files (Filtered from ${batchResults.length})`;
+                return;
+            }
+
+            let totalLines = 0;
+            let totalEmpty = 0;
+            for (let i = 0; i < filtered.length; i++) {
+                totalLines += (filtered[i].total_lines || 0);
+                totalEmpty += (filtered[i].empty_lines || 0);
+            }
+
+            const toRender = filtered.slice(0, batchDisplayLimit);
+            const rows = [];
+            for (let i = 0; i < toRender.length; i++) {
+                const item = toRender[i];
+                const binBadge = item.is_binary ? '<span class="bin-badge">BIN</span>' : '';
+                const p = escapeHtml(item.abs_path || item.path || '');
+                rows.push(`
+                    <tr data-path="${p}" style="cursor:pointer;" title="Click to inspect this file in Single File view">
+                        <td style="font-weight:600; font-family:var(--font-mono);">
+                            <span style="display:inline-flex; align-items:center; justify-content:space-between; width:100%;">
+                                <span>${escapeHtml(item.rel_path || item.name || item.filename)}${binBadge}</span>
+                                <span style="opacity:0.45; font-size:0.75rem; margin-left:0.5rem;" title="Inspect file">↗</span>
+                            </span>
+                        </td>
+                        <td style="text-align:right; font-weight:700; color:var(--accent-metric);">${Number(item.total_lines).toLocaleString()}</td>
+                        <td style="text-align:right; font-weight:600; color:var(--text-primary);">${Number(item.empty_lines).toLocaleString()}</td>
+                        <td style="text-align:right; color:var(--text-secondary);">${Number(item.content_lines).toLocaleString()}</td>
+                        <td style="text-align:right; color:var(--text-muted);">${item.file_size_formatted || ''}</td>
+                    </tr>
+                `);
+            }
+
+            if (filtered.length > batchDisplayLimit) {
+                rows.push(`
+                    <tr>
+                        <td colspan="5" style="text-align:center; padding: 0.85rem; background: rgba(255, 255, 255, 0.02); border-top: 1px dashed var(--border-subtle);">
+                            <span style="font-size:0.8rem; color:var(--text-muted); margin-right: 0.85rem;">Showing ${batchDisplayLimit} of ${filtered.length.toLocaleString()} files</span>
+                            <button class="btn btn-secondary" style="padding: 0.25rem 0.65rem; font-size: 0.775rem; margin-right: 0.35rem;" onclick="loadMoreBatchFiles(500)">Load Next 500</button>
+                            <button class="btn btn-secondary" style="padding: 0.25rem 0.65rem; font-size: 0.775rem;" onclick="loadAllBatchFiles()">Load All (${filtered.length.toLocaleString()})</button>
+                        </td>
+                    </tr>
+                `);
+            }
+
+            tbody.innerHTML = rows.join('');
+            tbody.onclick = (e) => {
+                const tr = e.target.closest('tr[data-path]');
+                if (tr && tr.dataset.path) {
+                    const filePath = tr.dataset.path;
+                    document.getElementById('filepath-input').value = filePath;
+                    countFromPath(filePath);
+                    const backBanner = document.getElementById('back-to-batch-banner');
+                    if (backBanner) {
+                        backBanner.style.display = 'block';
+                        const countSpan = document.getElementById('batch-return-count');
+                        if (countSpan) countSpan.innerText = batchResults.length.toLocaleString();
+                    }
+                    switchTab('file');
+                }
+            };
+
+            const filterTxt = (filtered.length !== batchResults.length) ? ` (Filtered from ${batchResults.length})` : '';
+            document.getElementById('batch-summary-lbl').innerText = `Showing ${toRender.length} of ${filtered.length} files${filterTxt} • Total Lines: ${totalLines.toLocaleString()} • Empty: ${totalEmpty.toLocaleString()}`;
+        }
+
+        function loadMoreBatchFiles(count) {
+            batchDisplayLimit += count;
+            renderFilteredBatchTable();
+        }
+
+        function loadAllBatchFiles() {
+            batchDisplayLimit = 1000000;
+            renderFilteredBatchTable();
+        }
+
+        function renderBatchResults(data) {
+            batchResults = data.files || [];
+            batchDisplayLimit = 300;
+            currentSortColumn = null;
+            currentSortAsc = true;
+            activeExtFilter = null;
+            batchSearchQuery = '';
+            const fIn = document.getElementById('batch-filter-input');
+            if (fIn) fIn.value = '';
+
+            buildExtPills(batchResults);
+            updateSortIcons();
+            renderFilteredBatchTable();
+
+            const totalFiles = Array.isArray(data) ? batchResults.length : (data.total_files ?? batchResults.length);
+            const totalLines = Array.isArray(data) ? batchResults.reduce((acc, r) => acc + (r.total_lines || 0), 0) : (data.total_lines ?? 0);
+            const totalEmpty = Array.isArray(data) ? batchResults.reduce((acc, r) => acc + (r.empty_lines || 0), 0) : (data.total_empty_lines ?? data.total_empty ?? 0);
+
+            const dropStats = document.getElementById('drop-result-stats');
+            if (dropStats) {
+                dropStats.innerText = `Scanned ${Number(totalFiles).toLocaleString()} files • ${Number(totalLines).toLocaleString()} total lines (${Number(totalEmpty).toLocaleString()} empty)`;
+            }
+            document.getElementById('btn-export-batch').style.display = 'inline-flex';
+            const btnMd = document.getElementById('btn-export-batch-md');
+            if (btnMd) btnMd.style.display = 'inline-flex';
+        }
+
+        function exportBatchMarkdown() {
+            if (!batchResults.length) return;
+            let md = "### \uD83D\uDCCA LineCounter Batch Scan Report\n\n";
+            md += "| File / Relative Path | Total Lines | Empty Lines | Content Lines | Size |\n";
+            md += "| :--- | :---: | :---: | :---: | :---: |\n";
+
+            batchResults.forEach(r => {
+                const name = r.rel_path || r.name || r.filename;
+                md += "| `" + name + "` | " + r.total_lines.toLocaleString() + " | " + r.empty_lines.toLocaleString() + " | " + r.content_lines.toLocaleString() + " | " + r.file_size_formatted + " |\n";
+            });
+
+            navigator.clipboard.writeText(md).then(() => {
+                showToast('Markdown Table Copied to Clipboard!');
+            }).catch(() => showToast('Could not copy to clipboard'));
+        }
+
+        function exportBatchCsv() {
+            if (!batchResults.length) return;
+            let csv = "File / Relative Path,Total Lines,Empty Lines,Content Lines,Size\n";
+            batchResults.forEach(r => {
+                const name = r.rel_path || r.name || r.filename;
+                csv += '"' + name + '",' + r.total_lines + ',' + r.empty_lines + ',' + r.content_lines + ',"' + r.file_size_formatted + '"\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "linecounter_batch_" + Date.now() + ".csv";
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('CSV Report Downloaded!');
+        }
+
+        function copyStatsSummary() {
+            if (!currentStats) return;
+            const s = currentStats;
+            const txt = `LineCounter Report: ${s.filename || 'File'}
+Total Lines: ${s.total_lines.toLocaleString()} (Empty lines included)
+Empty Lines: ${s.empty_lines.toLocaleString()} (Pure: ${s.pure_empty_lines}, Whitespace: ${s.whitespace_only_lines})
+Content Lines: ${s.content_lines.toLocaleString()}
+Size: ${s.file_size_formatted}
+Words: ${s.word_count.toLocaleString()} | Chars: ${s.char_count.toLocaleString()}`;
+            navigator.clipboard.writeText(txt).then(() => showToast('Summary copied!'))
+            .catch(() => showToast('Could not copy'));
+        }
+
+        function copyStatsMarkdown() {
+            if (!currentStats) return;
+            const s = currentStats;
+            const md = `### 📄 LineCounter: ${s.filename || 'File'}
+
+| Metric | Count |
+| :--- | :--- |
+| **Total Lines** | ${s.total_lines.toLocaleString()} |
+| **Empty Lines** | ${s.empty_lines.toLocaleString()} |
+| **Content Lines** | ${s.content_lines.toLocaleString()} |
+| **File Size** | ${s.file_size_formatted} |
+| **Word Count** | ${s.word_count.toLocaleString()} |
+`;
+            navigator.clipboard.writeText(md).then(() => showToast('Markdown copied!'))
+            .catch(() => showToast('Could not copy'));
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        function escapeHtml(s) {
+            return (s || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function escapeRegex(s) {
+            return (s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Global Keyboard Shortcuts
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const findCard = document.getElementById('find-replace-card');
+                if (findCard && findCard.style.display !== 'none') {
+                    closeFindWidget();
+                    return;
+                }
+                const h = document.getElementById('help-modal');
+                const c = document.getElementById('connect-modal');
+                const modalOpen = (h && h.classList.contains('open')) || (c && c.classList.contains('open'));
+                if (h) h.classList.remove('open');
+                if (c) c.classList.remove('open');
+                if (!modalOpen) {
+                    const backBanner = document.getElementById('back-to-batch-banner');
+                    if (backBanner && backBanner.style.display !== 'none') {
+                        returnToBatchScanner();
+                    }
+                }
+            } else if (e.ctrlKey && e.key === '1') {
+                e.preventDefault(); switchTab('drop');
+            } else if (e.ctrlKey && e.key === '2') {
+                e.preventDefault(); switchTab('file');
+            } else if (e.ctrlKey && e.key === '3') {
+                e.preventDefault(); switchTab('paste');
+            } else if (e.ctrlKey && e.key === '4') {
+                e.preventDefault(); switchTab('batch');
+            } else if (e.ctrlKey && e.key === 'o' && !e.shiftKey) {
+                e.preventDefault();
+                openFileNative();
+            } else if (e.ctrlKey && e.shiftKey && (e.key === 'O' || e.key === 'o')) {
+                e.preventDefault();
+                openFolderNative();
+            } else if (e.ctrlKey && e.key === 'w') {
+                e.preventDefault();
+                toggleLineWrap();
+            } else if (e.ctrlKey && (e.key === 'f' || e.key === 'F')) {
+                e.preventDefault();
+                openFindWidget(false);
+            } else if (e.ctrlKey && (e.key === 'h' || e.key === 'H')) {
+                e.preventDefault();
+                openFindWidget(true);
+            } else if (e.ctrlKey && (e.key === 'e' || e.key === 'E')) {
+                e.preventDefault();
+                toggleEditorMode();
+            } else if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
+                e.preventDefault();
+                if (isEditorMode || isFileDirty) saveCurrentFile();
+            } else if (e.ctrlKey && (e.key === 'g' || e.key === 'G')) {
+                e.preventDefault();
+                focusGoToInput();
+            } else if (e.altKey && (e.key === 'e' || e.key === 'E')) {
+                e.preventDefault();
+                jumpToEmptyLine(e.shiftKey ? -1 : 1);
+            }
+        });
+
+        function setupTauriListeners() {
+            if (window.__TAURI__ && window.__TAURI__.event && window.__TAURI__.event.listen) {
+                window.__TAURI__.event.listen('tauri-file-drop', (event) => {
+                    handleTauriDroppedPaths(event.payload);
+                });
+                window.__TAURI__.event.listen('tauri://drag-drop', (event) => {
+                    if (event && event.payload && event.payload.paths) {
+                        handleTauriDroppedPaths(event.payload.paths);
+                    }
+                });
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setupTauriListeners();
+            const params = new URLSearchParams(window.location.search);
+            const target = params.get('target');
+            if (target) {
+                fetch('/api/inspect-dropped-uris', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uris: target })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.action === 'file') {
+                        document.getElementById('filepath-input').value = data.path;
+                        countFromPath(data.path);
+                        switchTab('file');
+                    } else if (data.action === 'directory') {
+                        document.getElementById('dirpath-input').value = data.path;
+                        scanPathFolder(data.path);
+                        switchTab('batch');
+                    } else if (data.action === 'batch_paths') {
+                        switchTab('batch');
+                        processBatchPathsDirectly(data.paths);
+                    } else {
+                        switchTab('drop');
+                    }
+                })
+                .catch(() => switchTab('drop'));
+            } else {
+                switchTab('drop');
+            }
+        });
+    </script>
+</body>
+</html>

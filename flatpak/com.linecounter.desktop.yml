@@ -1,0 +1,31 @@
+app-id: com.linecounter.desktop
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: linecounter-desktop
+
+finish-args:
+  # X11 and Wayland display access
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  # GPU acceleration
+  - --device=dri
+  # Allow counting lines and saving edited files across host filesystem
+  - --filesystem=host
+  - --filesystem=xdg-documents
+  - --filesystem=xdg-download
+
+modules:
+  - name: linecounter
+    buildsystem: simple
+    build-commands:
+      - install -D -m755 linecounter-desktop /app/bin/linecounter-desktop
+      - install -D -m755 linecounter /app/bin/linecounter
+      - install -D -m644 linecounter.png /app/share/icons/hicolor/256x256/apps/com.linecounter.desktop.png
+      - install -D -m644 linecounter.svg /app/share/icons/hicolor/scalable/apps/com.linecounter.desktop.svg
+      - install -D -m644 LineCounter.desktop /app/share/applications/com.linecounter.desktop.desktop
+      - install -D -m644 flatpak/com.linecounter.desktop.metainfo.xml /app/share/metainfo/com.linecounter.desktop.metainfo.xml
+    sources:
+      - type: dir
+        path: ..
