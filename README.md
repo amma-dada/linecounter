@@ -39,27 +39,85 @@ Choose your preferred format from the [Releases page](https://github.com/amma-da
 
 ### 🐧 Linux
 
-Choose your preferred format from [Releases](https://github.com/amma-dada/linecounter/releases) or install locally:
+LineCounter runs on all major Linux distributions (**Ubuntu, Debian, Fedora, Arch Linux, openSUSE, Pop!_OS, Linux Mint**, etc.) with full Wayland and X11 support:
 
-- **Debian / Ubuntu Package (`.deb`)**:
-  Download **[linecounter_1.0.0_amd64.deb](https://github.com/amma-dada/linecounter/releases/latest/download/linecounter_1.0.0_amd64.deb)** and install via:
+#### 1. Standalone Linux Binary (Recommended for any Distro)
+
+Download the pre-compiled, self-contained standalone binary with zero external package manager required:
+
+1. **Download via Terminal**:
+   ```bash
+   curl -LO https://github.com/amma-dada/linecounter/releases/latest/download/LineCounter-Linux
+   ```
+   *(Or download directly from [Releases](https://github.com/amma-dada/linecounter/releases/latest/download/LineCounter-Linux) in your browser)*
+
+2. **Make Executable**:
+   - **Terminal command**:
+     ```bash
+     chmod +x LineCounter-Linux
+     ```
+   - **GUI File Manager**: Right-click `LineCounter-Linux` → **Properties** → **Permissions** → check **Allow executing file as program**.
+
+3. **Run LineCounter**:
+   ```bash
+   ./LineCounter-Linux
+   ```
+
+4. **Install to System (Run from anywhere — Optional)**:
+   Move the binary to your local bin directory to launch it from any terminal session or directory:
+   ```bash
+   mkdir -p ~/.local/bin
+   mv LineCounter-Linux ~/.local/bin/linecounter
+   ```
+   *Now simply type `linecounter` in any terminal to launch!*
+
+---
+
+#### 2. Debian / Ubuntu Package (`.deb`)
+
+For **Ubuntu, Debian, Linux Mint, Pop!_OS, Zorin OS, and elementary OS**:
+
+```bash
+# 1. Download the package
+wget https://github.com/amma-dada/linecounter/releases/latest/download/linecounter_1.0.0_amd64.deb
+
+# 2. Install the package
+sudo dpkg -i linecounter_1.0.0_amd64.deb
+
+# 3. Resolve any missing system libraries if prompted
+sudo apt install -f
+```
+*Adds LineCounter directly to your desktop Application Menu, sets up desktop icons, and configures file associations.*
+
+---
+
+#### 3. One-Click Native Installer Script
+
+If you cloned the source code, run the bundled installer to automatically integrate LineCounter into your desktop environment with high-resolution app icons:
+
+```bash
+git clone https://github.com/amma-dada/linecounter.git
+cd linecounter
+./install.sh
+```
+- **To Uninstall cleanly**:
   ```bash
-  sudo dpkg -i linecounter_1.0.0_amd64.deb
+  ./install.sh --uninstall
   ```
-- **One-Click Native Script**:
-  ```bash
-  git clone https://github.com/amma-dada/linecounter.git
-  cd linecounter
-  ./install.sh
-  ```
-- **Standalone Linux Binary**:
-  Download **[LineCounter-Linux](https://github.com/amma-dada/linecounter/releases/latest/download/LineCounter-Linux)**, make executable (`chmod +x LineCounter-Linux`), and run.
-- **Flatpak (Sandboxed)**:
-  ```bash
-  ./flatpak/build-flatpak.sh
-  flatpak run com.linecounter.desktop
-  ```
-- **Uninstall**: Run `./install.sh --uninstall`.
+
+---
+
+#### 4. Flatpak (Sandboxed Universal Package)
+
+For a fully isolated sandbox installation with Wayland, X11, and host filesystem access:
+
+```bash
+# Build and install locally
+./flatpak/build-flatpak.sh
+
+# Run via Flatpak
+flatpak run com.linecounter.desktop
+```
 
 ---
 
