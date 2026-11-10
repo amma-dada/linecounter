@@ -33,7 +33,7 @@ jobs:
       - name: Setup Node.js (for Tauri bundler)
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install Linux System Dependencies
         if: matrix.os == 'linux'
@@ -45,9 +45,15 @@ jobs:
         run: cargo build --release
 
       - name: Build Desktop Application & Installer
+        shell: bash
         run: |
           npm install -g @tauri-apps/cli
-          npx tauri build --manifest-path src-tauri/Cargo.toml || cargo build --release --manifest-path src-tauri/Cargo.toml
+          if (cd src-tauri && npx tauri build); then
+            echo "Tauri build completed successfully."
+          else
+            echo "Falling back to direct cargo release build..."
+            cargo build --release --manifest-path src-tauri/Cargo.toml
+          fi
 
       - name: Stage Windows Executables & Installer
         if: matrix.os == 'windows'
@@ -63,18 +69,28 @@ jobs:
             cp src-tauri/target/release/linecounter.exe dist/LineCounter-Windows-Portable.exe
           fi
           # Desktop NSIS Setup Installer
-          NSIS_INSTALLER=$(find src-tauri/target/release/bundle/nsis -name "*.exe" 2>/dev/null | head -n 1)
-          if [ -n "$NSIS_INSTALLER" ] && [ -f "$NSIS_INSTALLER" ]; then
-            cp "$NSIS_INSTALLER" dist/LineCounter-Setup-x64.exe
+          if [ -d "src-tauri/target/release/bundle/nsis" ]; then
+            for f in src-tauri/target/release/bundle/nsis/*.exe; do
+              if [ -f "$f" ]; then
+                cp "$f" dist/LineCounter-Setup-x64.exe
+                break
+              fi
+            done
           fi
           # Desktop MSI Installer
-          MSI_INSTALLER=$(find src-tauri/target/release/bundle/msi -name "*.msi" 2>/dev/null | head -n 1)
-          if [ -n "$MSI_INSTALLER" ] && [ -f "$MSI_INSTALLER" ]; then
-            cp "$MSI_INSTALLER" dist/LineCounter-Setup-x64.msi
+          if [ -d "src-tauri/target/release/bundle/msi" ]; then
+            for f in src-tauri/target/release/bundle/msi/*.msi; do
+              if [ -f "$f" ]; then
+                cp "$f" dist/LineCounter-Setup-x64.msi
+                break
+              fi
+            done
           fi
+          ls -la dist
 
       - name: Stage Linux Executables & Packages
         if: matrix.os == 'linux'
+        shell: bash
         run: |
           mkdir -p dist
           # Terminal CLI
@@ -88,10 +104,15 @@ jobs:
             chmod +x dist/LineCounter-Linux
           fi
           # Debian Package
-          DEB_PKG=$(find src-tauri/target/release/bundle/deb -name "*.deb" 2>/dev/null | head -n 1)
-          if [ -n "$DEB_PKG" ] && [ -f "$DEB_PKG" ]; then
-            cp "$DEB_PKG" dist/LineCounter-Linux.deb
+          if [ -d "src-tauri/target/release/bundle/deb" ]; then
+            for f in src-tauri/target/release/bundle/deb/*.deb; do
+              if [ -f "$f" ]; then
+                cp "$f" dist/LineCounter-Linux.deb
+                break
+              fi
+            done
           fi
+          ls -la dist
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4

@@ -18,11 +18,14 @@
 
 ## 📸 Screenshots
 
-| 1. Single File Inspector | 2. Batch Directory Scanner |
+### 1. Single File Inspector & Live In-App Editor
+<img src="assets/screenshots/01-single-file.png" width="100%" alt="Single File Inspector" />
+
+<br>
+
+| 2. Batch Directory Scanner | 3. Live Paste Counter |
 | :---: | :---: |
-| <a href="assets/screenshots/02-single-file.png"><img src="assets/screenshots/02-single-file.png" width="100%" alt="Single File Inspector Tab" /></a> | <a href="assets/screenshots/04-batch-scanner.png"><img src="assets/screenshots/04-batch-scanner.png" width="100%" alt="Batch Scanner Tab" /></a> |
-| **3. Live Paste Counter** | **Universal Drag & Drop** |
-| <a href="assets/screenshots/03-live-paste.png"><img src="assets/screenshots/03-live-paste.png" width="100%" alt="Live Paste Counter Tab" /></a> | <a href="assets/screenshots/01-drag-drop.png"><img src="assets/screenshots/01-drag-drop.png" width="100%" alt="Universal Drag & Drop" /></a> |
+| <img src="assets/screenshots/02-batch-scanner.png" width="100%" alt="Batch Directory Scanner" /> | <img src="assets/screenshots/03-live-paste.png" width="100%" alt="Live Paste Counter" /> |
 
 ---
 
