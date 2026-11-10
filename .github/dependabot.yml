@@ -1,0 +1,21 @@
+version: 2
+updates:
+  - package-ecosystem: "cargo"
+    directory: "/src-tauri"
+    schedule:
+      interval: "weekly"
+    ignore:
+      - dependency-name: "glib"
+        # Advisory RUSTSEC-2024-0429 / GHSA-wrw7-89jp-8q8g:
+        # Pinned by upstream Tauri v2 Linux GTK3 ecosystem (gtk-rs 0.18.5).
+        # LineCounter does not use glib::VariantStrIter, and glib is not used on Windows.
+
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

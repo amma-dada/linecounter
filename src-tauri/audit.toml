@@ -1,0 +1,12 @@
+[advisories]
+ignore = [
+    # Advisory RUSTSEC-2024-0429 (GHSA-wrw7-89jp-8q8g):
+    # Unsoundness in Iterator for glib::VariantStrIter (<0.20.0).
+    # Pinned by Tauri v2 Linux GTK3 stack (gtk-rs 0.18).
+    # LineCounter never invokes VariantStrIter, and glib is not linked on Windows.
+    "RUSTSEC-2024-0429",
+    "RUSTSEC-2024-0370",
+    "RUSTSEC-2026-0370",
+    "RUSTSEC-2026-0371",
+    "RUSTSEC-2026-0372",
+]

@@ -13,6 +13,10 @@ use tauri_plugin_opener::OpenerExt;
 fn setup_environment() {
     #[cfg(target_os = "linux")]
     {
+        // Force GTK3 and GIO to use XDG Desktop Portal for file choosers (modern Libadwaita / GNOME dialog)
+        std::env::set_var("GTK_USE_PORTAL", "1");
+        std::env::set_var("GIO_USE_PORTALS", "1");
+
         // Set GLib program name and application name so GNOME Shell / Wayland matches window to com.linecounter.desktop
         unsafe {
             extern "C" {

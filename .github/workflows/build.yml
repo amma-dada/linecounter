@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
@@ -30,29 +30,70 @@ jobs:
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Setup Node.js (for Tauri bundler)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Install Linux System Dependencies
         if: matrix.os == 'linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
 
-      - name: Build Desktop GUI Executable
-        run: cargo build --release --manifest-path src-tauri/Cargo.toml
+      - name: Build Terminal CLI Tool
+        run: cargo build --release
 
-      - name: Stage Windows Executable
+      - name: Build Desktop Application & Installer
+        run: |
+          npm install -g @tauri-apps/cli
+          npx tauri build --manifest-path src-tauri/Cargo.toml || cargo build --release --manifest-path src-tauri/Cargo.toml
+
+      - name: Stage Windows Executables & Installer
         if: matrix.os == 'windows'
         shell: bash
         run: |
           mkdir -p dist
-          cp src-tauri/target/release/linecounter.exe dist/LineCounter.exe
+          # Terminal CLI
+          if [ -f target/release/linecounter.exe ]; then
+            cp target/release/linecounter.exe dist/LineCounter-CLI-Windows.exe
+          fi
+          # Desktop Portable Executable
+          if [ -f src-tauri/target/release/linecounter.exe ]; then
+            cp src-tauri/target/release/linecounter.exe dist/LineCounter-Windows-Portable.exe
+          fi
+          # Desktop NSIS Setup Installer
+          NSIS_INSTALLER=$(find src-tauri/target/release/bundle/nsis -name "*.exe" 2>/dev/null | head -n 1)
+          if [ -n "$NSIS_INSTALLER" ] && [ -f "$NSIS_INSTALLER" ]; then
+            cp "$NSIS_INSTALLER" dist/LineCounter-Setup-x64.exe
+          fi
+          # Desktop MSI Installer
+          MSI_INSTALLER=$(find src-tauri/target/release/bundle/msi -name "*.msi" 2>/dev/null | head -n 1)
+          if [ -n "$MSI_INSTALLER" ] && [ -f "$MSI_INSTALLER" ]; then
+            cp "$MSI_INSTALLER" dist/LineCounter-Setup-x64.msi
+          fi
 
-      - name: Stage Linux Executable
+      - name: Stage Linux Executables & Packages
         if: matrix.os == 'linux'
         run: |
           mkdir -p dist
-          cp src-tauri/target/release/linecounter dist/LineCounter-Linux
+          # Terminal CLI
+          if [ -f target/release/linecounter ]; then
+            cp target/release/linecounter dist/LineCounter-CLI-Linux
+            chmod +x dist/LineCounter-CLI-Linux
+          fi
+          # Desktop Executable
+          if [ -f src-tauri/target/release/linecounter ]; then
+            cp src-tauri/target/release/linecounter dist/LineCounter-Linux
+            chmod +x dist/LineCounter-Linux
+          fi
+          # Debian Package
+          DEB_PKG=$(find src-tauri/target/release/bundle/deb -name "*.deb" 2>/dev/null | head -n 1)
+          if [ -n "$DEB_PKG" ] && [ -f "$DEB_PKG" ]; then
+            cp "$DEB_PKG" dist/LineCounter-Linux.deb
+          fi
 
-      - name: Upload Build Artifact
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: LineCounter-${{ matrix.os }}

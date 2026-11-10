@@ -30,10 +30,13 @@
 
 ### 🪟 Windows
 
+LineCounter is a 100% native desktop application. All dependencies and UI resources are bundled directly inside the binary — **no local servers, no ports, no network connections, and no background services needed**.
+
 Choose your preferred format from the [Releases page](https://github.com/amma-dada/linecounter/releases):
 
-- **Installer (`.exe` Setup)**: Download **[LineCounter-Setup.exe](https://github.com/amma-dada/linecounter/releases)** (installs with Desktop and Start Menu shortcuts).
-- **Portable Standalone (`.exe`)**: Download **[LineCounter.exe](https://github.com/amma-dada/linecounter/releases/latest/download/LineCounter.exe)** (runs immediately with zero installation).
+- **Installer (`.exe` Setup)**: Download **[LineCounter-Setup-x64.exe](https://github.com/amma-dada/linecounter/releases)** (installs to Program Files with Desktop and Start Menu shortcuts).
+- **Portable Standalone (`.exe`)**: Download **[LineCounter-Windows-Portable.exe](https://github.com/amma-dada/linecounter/releases)** (runs immediately with zero installation required).
+- **Terminal CLI (`.exe`)**: Download **[LineCounter-CLI-Windows.exe](https://github.com/amma-dada/linecounter/releases)** for Command Prompt and PowerShell.
 
 ---
 
@@ -203,4 +206,4 @@ Developed and maintained by **Mortada (Dada)**.
 ## 📄 License & Logo
 
 - **Code License**: [Apache License 2.0](LICENSE).
-- **Logo & Artwork**: The official dial logo is original copyright and trademark of **Mortada (Dada)**. The name "LineCounter" is free and unrestricted for anyone to use.
+- **Logo & Artwork**: The official logo and app icon artwork is original copyright and trademark of **Mortada (Dada)**. The name "LineCounter" is free and unrestricted for anyone to use.

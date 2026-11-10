@@ -52,6 +52,8 @@ cat <<EOF > "${BIN_DIR}/linecounter"
 #!/usr/bin/env bash
 export WEBKIT_DISABLE_DMABUF_RENDERER=1
 export GSK_RENDERER=ngl
+export GTK_USE_PORTAL=1
+export GIO_USE_PORTALS=1
 if [ "\$#" -eq 0 ]; then
     exec "${SOURCE_DIR}/linecounter-desktop"
 else
